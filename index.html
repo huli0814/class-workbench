@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三（3）班班主任工作台</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#eef1f6;
+  --card:#fff;
+  --border:#e8ecf3;
+  --text:#2b3445;
+  --text-2:#7a8699;
+  --text-3:#a8b2c1;
+  --primary:#ef8a8a;
+  --primary-soft:#fdeaea;
+  --mint:#7fc9b4;--mint-soft:#e5f6f1;
+  --mustard:#e8b95e;--mustard-soft:#fdf4e0;
+  --pink:#e89ab8;--pink-soft:#fcebf1;
+  --blue:#7fb0dd;--blue-soft:#e8f1fa;
+  --lav:#ab9ad8;--lav-soft:#f0ecfa;
+  --shadow-sm:0 2px 6px rgba(90,110,140,.05);
+  --shadow:0 4px 16px rgba(90,110,140,.08);
+  --radius:16px;
+  --radius-sm:10px;
+}
+body{
+  font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  color:var(--text);
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(at 8% 0%, rgba(239,138,138,.09) 0px, transparent 45%),
+    radial-gradient(at 95% 8%, rgba(127,176,221,.10) 0px, transparent 45%),
+    radial-gradient(at 20% 95%, rgba(127,201,180,.08) 0px, transparent 45%);
+  background-attachment:fixed;
+  font-size:14px;
+  line-height:1.6;
+}
+.app{display:flex;min-height:100vh}
+.sidebar{width:212px;flex-shrink:0;background:rgba(255,255,255,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-right:1px solid var(--border);padding:16px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.brand-logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#ef8a8a,#e89ab8);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;box-shadow:0 4px 10px rgba(239,138,138,.3)}
+.brand-title{font-size:14px;font-weight:600;line-height:1.3}
+.brand-sub{font-size:11px;color:var(--text-3)}
+.sidebar nav{display:flex;flex-direction:column;gap:2px}
+.sidebar button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;background:none;border:none;color:var(--text-2);font-size:13.5px;text-align:left;cursor:pointer;transition:.18s;border-radius:10px;font-family:inherit}
+.sidebar button:hover{background:rgba(239,138,138,.07);color:var(--text)}
+.sidebar button.active{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.main{flex:1;min-width:0}
+.content{padding:20px 24px 60px;max-width:1300px;margin:0 auto}
+.page{display:none}
+.page.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+h2.page-title{font-size:20px;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:#1f2733}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:16px}
+.btn{padding:8px 16px;border:none;border-radius:999px;font-size:13.5px;cursor:pointer;transition:.18s;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 3px 8px rgba(239,138,138,.28)}
+.btn-primary:hover{background:#e57a7a}
+.btn-primary:disabled{background:#e8ddd;opacity:.55;cursor:not-allowed;box-shadow:none}
+.btn-gray{background:#f0f3f8;color:var(--text-2)}
+.btn-gray:hover{background:#e6ebf3}
+.btn-danger{background:#fdeaea;color:#d9534f}
+.btn-danger:hover{background:#fbdada}
+.btn-mint{background:var(--mint-soft);color:#3d9a82}
+.btn-mint:hover{background:#d5efe7}
+.btn-sm{padding:4px 11px;font-size:12px}
+input,select,textarea{border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13.5px;outline:none;font-family:inherit;transition:.18s;width:100%;background:#fbfcfe;color:var(--text)}
+input:focus,textarea:focus,select:focus{border-color:#f3b8b8;box-shadow:0 0 0 3px rgba(239,138,138,.1);background:#fff}
+textarea{resize:vertical;line-height:1.6}
+.form-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.form-row>*{flex:1;min-width:110px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;padding:10px 8px;color:var(--text-3);font-weight:500;border-bottom:1px solid var(--border);font-size:12.5px;white-space:nowrap}
+td{padding:11px 8px;border-bottom:1px solid #f4f7fb;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafcff}
+.empty{text-align:center;padding:32px 12px;color:var(--text-3);font-size:13.5px}
+.muted{color:var(--text-3)}
+.tag{padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:500;display:inline-block;white-space:nowrap}
+.tag-blue{background:var(--blue-soft);color:#4a7fb0}
+.tag-mint{background:var(--mint-soft);color:#3d9a82}
+.tag-mustard{background:var(--mustard-soft);color:#b08b2e}
+.tag-pink{background:var(--pink-soft);color:#c76e93}
+.tag-lav{background:var(--lav-soft);color:#7d6bb5}
+.tag-gray{background:#f0f3f8;color:var(--text-2)}
+.tag-red{background:#fdeaea;color:#d9534f}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;background:#f4f7fb;color:var(--text-2)}
+.greet-card{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(115deg,#fff 0%,#fff9f9 60%,#fdf1f5 100%);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow-sm);margin-bottom:14px;flex-wrap:wrap;gap:12px}
+.greet-hi{font-size:21px;font-weight:700;color:#1f2733;margin-bottom:3px}
+.greet-date{font-size:13px;color:var(--text-2)}
+.greet-quote{font-size:14px;color:var(--text);margin-top:8px;font-style:italic;line-height:1.6;padding-left:12px;border-left:3px solid var(--primary-soft)}
+.greet-avatar{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#f9d5d5,#f5c7d4);display:flex;align-items:center;justify-content:center;font-size:24px}
+.quick-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:6px;box-shadow:var(--shadow-sm);margin-bottom:16px;transition:.2s}
+.quick-card:focus-within{border-color:#f3b8b8;box-shadow:0 0 0 4px rgba(239,138,138,.08)}
+.quick-card input{border:none;background:transparent;padding:12px 16px;font-size:14.5px}
+.quick-card input:focus{box-shadow:none;background:transparent}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#f3d5d5}
+.stat-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
+.stat-num{font-size:22px;font-weight:700;color:#1f2733;line-height:1.2}
+.stat-label{font-size:12.5px;color:var(--text-2);margin-top:2px}
+.stat-more{position:absolute;top:14px;right:14px;color:var(--text-3);font-size:14px}
+.holiday-board{background:linear-gradient(110deg,#fff5f5 0%,#fffaf3 50%,#f0f9f6 100%);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow-sm);margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.holiday-hero{display:flex;align-items:center;gap:14px;min-width:230px}
+.holiday-emoji{font-size:32px}
+.holiday-name{font-size:16px;font-weight:700;color:#1f2733}
+.holiday-days{font-size:13px;color:var(--text-2);margin-top:1px}
+.holiday-days b{color:var(--primary);font-size:19px;font-weight:700}
+.holiday-list{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.holiday-chip{background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:999px;padding:5px 13px;font-size:12.5px;color:var(--text-2);display:flex;align-items:center;gap:6px}
+.holiday-chip b{color:var(--text);font-weight:600}
+.home-lists{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.home-list-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm)}
+.hl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.hl-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
+.hl-title .dot{width:8px;height:8px;border-radius:50%}
+.hl-link{font-size:12px;color:var(--text-3);cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+.hl-link:hover{color:var(--primary)}
+.hl-item{padding:9px 0;border-bottom:1px solid #f4f7fb;font-size:13px;display:flex;gap:9px;align-items:flex-start;line-height:1.5}
+.hl-item:last-child{border-bottom:none}
+.hl-item .bullet{width:5px;height:5px;border-radius:50%;background:var(--primary);margin-top:8px;flex-shrink:0}
+.hl-item .hl-content{flex:1;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hl-item .hl-time{font-size:11.5px;color:var(--text-3);white-space:nowrap}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.cal-header h3{font-size:16px;color:#1f2733}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-grid .head{text-align:center;font-size:12px;color:var(--text-3);padding:6px 0;font-weight:500}
+.cal-day{text-align:center;padding:10px 2px;border-radius:10px;font-size:13.5px;cursor:pointer;position:relative;transition:.15s;color:var(--text)}
+.cal-day:hover{background:#f8fafd}
+.cal-day.other{color:#d5dbe5}
+.cal-day.today{color:var(--primary);font-weight:700;background:var(--primary-soft)}
+.cal-day.selected{background:var(--primary);color:#fff}
+.cal-day.has-log::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--primary)}
+.cal-day.selected.has-log::after{background:#fff}
+.log-item{padding:12px 0;border-bottom:1px solid #f4f7fb}
+.log-item:last-child{border-bottom:none}
+.log-item .meta{display:flex;gap:8px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.log-item .time{font-size:12px;color:var(--text-3)}
+.log-item .content{font-size:13.5px;line-height:1.65;color:#3b4657}
+.timeline{position:relative;padding-left:20px}
+.timeline::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:#f0f3f8;border-radius:2px}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item::before{content:'';position:absolute;left:-19px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--primary);border:2px solid #fff;box-shadow:0 0 0 2px var(--primary-soft)}
+.tl-item .tl-date{font-size:12px;color:var(--text-3);margin-bottom:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tl-item .tl-content{font-size:13.5px;color:#3b4657;line-height:1.65}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(40,55,80,.28);backdrop-filter:blur(3px);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex;animation:fade .18s ease}
+.modal{background:#fff;border-radius:20px;padding:24px;width:92%;max-width:600px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(50,70,100,.2)}
+.modal h3{font-size:17px;margin-bottom:4px;color:#1f2733;display:flex;align-items:center;gap:8px}
+.modal .sub{font-size:12.5px;color:var(--text-3);margin-bottom:16px}
+.qm-text{background:#fafbfd;border:1px dashed #dfe6ef;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.65;color:#3b4657;margin-bottom:14px}
+.qm-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.qm-row .lbl{font-size:12.5px;color:var(--text-2);min-width:56px}
+.qm-row input[type=date]{flex:1;max-width:200px}
+.stu-chip{padding:5px 13px;border-radius:999px;border:1.5px solid var(--border);font-size:12.5px;cursor:pointer;transition:.15s;background:#fff;color:var(--text-2);user-select:none}
+.stu-chip:hover{border-color:#f3b8b8}
+.stu-chip.on{background:var(--primary-soft);color:var(--primary);border-color:var(--primary);font-weight:500}
+.qm-modules{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.module-card{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:14px;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:.18s;position:relative}
+.module-card:hover{border-color:#dfe6ef;background:#fafcff}
+.module-card.on{border-color:var(--primary);background:var(--primary-soft)}
+.module-card.on .mc-check{opacity:1;transform:scale(1)}
+.module-card .mc-icon{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.module-card .mc-info{flex:1;min-width:0}
+.module-card .mc-name{font-size:13.5px;font-weight:600;color:#1f2733;line-height:1.3}
+.module-card .mc-desc{font-size:11.5px;color:var(--text-3);margin-top:1px}
+.module-card .mc-check{position:absolute;top:8px;right:10px;color:var(--primary);font-weight:700;opacity:0;transform:scale(.6);transition:.18s;font-size:14px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.curve-wrap{background:#fafbfd;border-radius:14px;padding:12px;overflow-x:auto}
+.curve-svg{display:block;width:100%;max-width:720px;height:auto;margin:0 auto}
+.curve-legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-size:12px;color:var(--text-2)}
+.curve-legend .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.photo-item{position:relative;border-radius:14px;overflow:hidden;background:#fafbfd;box-shadow:var(--shadow-sm);border:1px solid var(--border)}
+.photo-item img{width:100%;height:130px;object-fit:cover;display:block}
+.photo-item .info{padding:8px 10px;font-size:11.5px;color:var(--text-2)}
+.photo-item .del{position:absolute;top:6px;right:6px;background:rgba(40,55,80,.55);color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1}
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-16px);background:#fff;color:var(--text);padding:11px 22px;border-radius:999px;font-size:13.5px;z-index:999;opacity:0;transition:.3s;pointer-events:none;box-shadow:0 8px 24px rgba(80,100,130,.15);border:1px solid var(--border);font-weight:500}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+@media(max-width:900px){
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .home-lists{grid-template-columns:1fr}
+  .qm-modules{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}
+  .brand{display:none}
+  .sidebar nav{flex-direction:row;gap:6px}
+  .sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}
+  .content{padding:14px}
+  .stat-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .greet-hi{font-size:18px}
+  .holiday-board{flex-direction:column;align-items:flex-start;gap:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">三</div>
+      <div>
+        <div class="brand-title">班主任工作台</div>
+        <div class="brand-sub">三（3）班</div>
+      </div>
+    </div>
+    <nav id="nav">
+      <button class="active" data-tab="home">🏠 工作台首页</button>
+      <button data-tab="students">👥 学生档案</button>
+      <button data-tab="log">📅 班级日志</button>
+      <button data-tab="todo">✅ 待办事项</button>
+      <button data-tab="score">📈 成绩分析</button>
+      <button data-tab="wrong">📝 错题汇总</button>
+      <button data-tab="reflection">💡 课堂反思</button>
+      <button data-tab="comm">💬 家校沟通</button>
+      <button data-tab="photo">📷 班级相册</button>
+      <button data-tab="export">📤 数据导出</button>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <div class="content">
+
+      <div class="page active" id="page-home">
+        <div class="greet-card">
+          <div style="flex:1">
+            <div class="greet-hi" id="greet-hi">Hi，黄老师 👋</div>
+            <div class="greet-date" id="greet-date">—</div>
+            <div class="greet-quote" id="greet-quote">—</div>
+          </div>
+          <div class="greet-avatar">🌸</div>
+        </div>
+        <div class="quick-card">
+          <input id="quick-input" placeholder="✍️ 一句话速记：如「今天数学测验张明95分，表扬了他」，按回车智能识别 ✨">
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card" onclick="go('students')">
+            <div class="stat-icon" style="background:var(--blue-soft);color:#4a7fb0">👥</div>
+            <div class="stat-num" id="stat-students">0</div>
+            <div class="stat-label">班级学生数</div>
+            <div class="stat-more">›</div>
+          </div>
+          <div class="stat-card" onclick="editCourse()">
+            <div class="stat-icon" style="background:var(--mint-soft);color:#3d9a82">📚</div>
+            <div class="stat-num" id="stat-course" style="font-size:15px;line-height:1.4;margin-top:4px">—</div>
+            <div class="stat-label">今日课程（点击编辑）</div>
+            <div class="stat-more">›</div>
+          </div>
+          <div class="stat-card" onclick="go('todo')">
+            <div class="stat-icon" style="background:var(--mustard-soft);color:#b08b2e">✅</div>
+            <div class="stat-num" id="stat-todo">0</div>
+            <div class="stat-label">未完成待办</div>
+            <div class="stat-more">›</div>
+          </div>
+          <div class="stat-card" onclick="go('comm')">
+            <div class="stat-icon" style="background:var(--pink-soft);color:#c76e93">💬</div>
+            <div class="stat-num" id="stat-comm">0</div>
+            <div class="stat-label">待跟进沟通</div>
+            <div class="stat-more">›</div>
+          </div>
+        </div>
+        <div class="holiday-board">
+          <div class="holiday-hero" id="holiday-hero"></div>
+          <div class="holiday-list" id="holiday-list"></div>
+        </div>
+        <div class="home-lists">
+          <div class="home-list-card">
+            <div class="hl-head"><div class="hl-title"><span class="dot" style="background:var(--mustard)"></span>待办事项</div><button class="hl-link" onclick="go('todo')">全部 ›</button></div>
+            <div id="home-todo"></div>
+          </div>
+          <div class="home-list-card">
+            <div class="hl-head"><div class="hl-title"><span class="dot" style="background:var(--blue)"></span>最近班级日志</div><button class="hl-link" onclick="go('log')">全部 ›</button></div>
+            <div id="home-log"></div>
+          </div>
+          <div class="home-list-card">
+            <div class="hl-head"><div class="hl-title"><span class="dot" style="background:var(--pink)"></span>待跟进沟通</div><button class="hl-link" onclick="go('comm')">全部 ›</button></div>
+            <div id="home-comm"></div>
+          </div>
+          <div class="home-list-card">
+            <div class="hl-head"><div class="hl-title"><span class="dot" style="background:var(--lav)"></span>最近课堂反思</div><button class="hl-link" onclick="go('reflection')">全部 ›</button></div>
+            <div id="home-reflection"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-students">
+        <h2 class="page-title">👥 学生档案</h2>
+        <div class="card">
+          <div class="form-row">
+            <input id="stu-name" placeholder="姓名">
+            <select id="stu-gender" style="flex:0 0 80px"><option>男</option><option>女</option></select>
+            <input id="stu-birthday" type="date" style="flex:0 0 130px">
+            <input id="stu-parent" placeholder="家长姓名" style="flex:1">
+            <input id="stu-phone" placeholder="家长电话" style="flex:1">
+            <input id="stu-address" placeholder="家庭住址" style="flex:2">
+            <button class="btn btn-primary" onclick="addStudent()">＋ 添加学生</button>
+          </div>
+        </div>
+        <div class="card" style="padding:8px 18px;overflow-x:auto;">
+          <table><thead><tr><th>学号</th><th>姓名</th><th>性别</th><th>生日</th><th>家长</th><th>电话</th><th>住址</th><th style="text-align:right">操作</th></tr></thead>
+          <tbody id="stu-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="page" id="page-log">
+        <h2 class="page-title">📅 班级日志</h2>
+        <div class="card">
+          <div class="cal-header">
+            <button class="btn btn-gray btn-sm" onclick="changeMonth(-1)">◀</button>
+            <h3 id="cal-title"></h3>
+            <button class="btn btn-gray btn-sm" onclick="changeMonth(1)">▶</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+        <div class="card">
+          <h3 id="log-date-title" style="font-size:15px;margin-bottom:12px"></h3>
+          <div id="log-list"></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-todo">
+        <h2 class="page-title">✅ 待办事项</h2>
+        <div class="card">
+          <div class="form-row">
+            <input id="todo-input" placeholder="待办内容，如：收数学作业本" style="flex:2">
+            <input type="date" id="todo-date" style="flex:1">
+            <select id="todo-priority" style="flex:0 0 100px"><option>普通</option><option>重要</option><option>紧急</option></select>
+            <button class="btn btn-primary" onclick="addTodo()">＋ 添加</button>
+          </div>
+        </div>
+        <div class="card" style="padding:8px 18px"><div id="todo-list"></div></div>
+      </div>
+
+      <div class="page" id="page-score">
+        <h2 class="page-title">📈 成绩分析</h2>
+        <div class="card">
+          <div style="font-size:13.5px;font-weight:600;margin-bottom:10px;color:#1f2733">📷 拍照 / 手动录入成绩</div>
+          <div class="form-row">
+            <select id="score-student" style="flex:1"></select>
+            <select id="score-subject" style="flex:0 0 90px">
+              <option>语文</option><option>数学</option><option>英语</option><option>科学</option>
+            </select>
+            <input id="score-exam" placeholder="考试名称，如：第二单元" style="flex:1.3">
+            <input id="score-num" type="number" placeholder="分数" style="flex:0 0 80px">
+            <input id="score-total" type="number" placeholder="满分" value="100" style="flex:0 0 80px">
+            <button class="btn btn-primary" onclick="addScore()">录入</button>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+            <label class="btn btn-mint btn-sm" style="cursor:pointer">📷 上传成绩单照片（辅助核对）<input type="file" id="score-photo" accept="image/*" style="display:none" onchange="previewScorePhoto(event)"></label>
+            <span class="muted" style="font-size:12px">上传后参考图片手动填分数，系统会自动归入学生档案</span>
+          </div>
+          <div id="score-photo-preview" style="margin-top:10px"></div>
+        </div>
+        <div class="card">
+          <div class="form-row" style="margin-bottom:14px">
+            <select id="curve-student" style="flex:1" onchange="renderScoreCurve()"></select>
+            <select id="curve-subject" style="flex:0 0 110px" onchange="renderScoreCurve()">
+              <option value="">全部科目</option>
+              <option>语文</option><option>数学</option><option>英语</option><option>科学</option>
+            </select>
+            <span class="muted" style="font-size:12.5px;flex:2">📊 成绩趋势曲线（至少 2 次记录）</span>
+          </div>
+          <div id="curve-chart"></div>
+        </div>
+        <div class="card" style="padding:8px 18px">
+          <table><thead><tr><th>日期</th><th>学生</th><th>科目</th><th>考试</th><th>成绩</th><th style="text-align:right">操作</th></tr></thead>
+          <tbody id="score-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <div class="page" id="page-wrong">
+        <h2 class="page-title">📝 错题汇总</h2>
+        <div class="card">
+          <div class="form-row">
+            <select id="wrong-student" style="flex:1"></select>
+            <select id="wrong-subject" style="flex:0 0 90px"><option>语文</option><option>数学</option><option>英语</option><option>科学</option></select>
+            <input id="wrong-content" placeholder="错题描述或题目" style="flex:2.5">
+            <button class="btn btn-primary" onclick="addWrong()">＋ 添加</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="form-row" style="margin-bottom:12px">
+            <select id="wrong-filter" onchange="renderWrong()" style="flex:1"></select>
+            <select id="wrong-status" onchange="renderWrong()" style="flex:0 0 130px"><option value="">全部状态</option><option value="0">未掌握</option><option value="1">已掌握</option></select>
+          </div>
+          <div id="wrong-list"></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-reflection">
+        <h2 class="page-title">💡 课堂记录与反思</h2>
+        <div class="card">
+          <div class="form-row">
+            <select id="ref-subject" style="flex:0 0 100px"><option>语文</option><option>数学</option><option>英语</option><option>科学</option><option>班会</option><option>其他</option></select>
+            <input id="ref-title" placeholder="课题 / 主题" style="flex:1.5">
+            <select id="ref-rating" style="flex:0 0 110px"><option value="5">⭐⭐⭐⭐⭐ 很满意</option><option value="4" selected>⭐⭐⭐⭐ 不错</option><option value="3">⭐⭐⭐ 一般</option><option value="2">⭐⭐ 待改进</option><option value="1">⭐ 需反思</option></select>
+          </div>
+          <textarea id="ref-content" rows="3" placeholder="本节课的亮点、不足、改进方向……"></textarea>
+          <div style="text-align:right;margin-top:10px"><button class="btn btn-primary" onclick="addReflection()">＋ 保存反思</button></div>
+        </div>
+        <div class="card"><div id="ref-list"></div></div>
+      </div>
+
+      <div class="page" id="page-comm">
+        <h2 class="page-title">💬 家校沟通</h2>
+        <div class="card">
+          <div class="form-row">
+            <select id="comm-student" style="flex:1"></select>
+            <select id="comm-type" style="flex:0 0 110px"><option>电话沟通</option><option>微信沟通</option><option>面谈</option><option>家访</option><option>家长会</option><option>其他</option></select>
+            <input id="comm-content" placeholder="沟通内容" style="flex:2.5">
+          </div>
+          <div class="form-row">
+            <label style="font-size:12.5px;color:var(--text-2);display:flex;align-items:center;gap:6px;flex:0 0 auto"><input type="checkbox" id="comm-need-follow" style="width:auto" onchange="toggleFollowInput()"> 需要后续跟进</label>
+            <input type="date" id="comm-follow-date" placeholder="跟进日期" style="flex:1;max-width:180px" disabled>
+            <input id="comm-follow-note" placeholder="跟进事项（可选）" style="flex:2" disabled>
+            <button class="btn btn-primary" onclick="addComm()">＋ 记录</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="form-row" style="margin-bottom:12px">
+            <select id="comm-filter" onchange="renderComm()" style="flex:1"></select>
+            <select id="comm-status-filter" onchange="renderComm()" style="flex:0 0 140px"><option value="">全部状态</option><option value="pending">待跟进</option><option value="overdue">已逾期</option><option value="done">已完成</option></select>
+          </div>
+          <div id="comm-list"></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-photo">
+        <h2 class="page-title">📷 班级相册</h2>
+        <div class="card">
+          <div class="form-row">
+            <input type="file" id="photo-file" accept="image/*" multiple style="flex:2">
+            <input id="photo-desc" placeholder="照片说明（可选）" style="flex:2">
+            <button class="btn btn-primary" onclick="uploadPhotos()">上传</button>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:6px">⚠️ 图片保存在浏览器本地，建议上传压缩后的图片。</div>
+        </div>
+        <div class="card"><div class="photo-grid" id="photo-grid"></div></div>
+      </div>
+
+      <div class="page" id="page-export">
+        <h2 class="page-title">📤 数据导出</h2>
+        <div class="card">
+          <p class="muted" style="margin-bottom:14px;font-size:13px">导出为 Excel（.xlsx）文件，可直接用 WPS / Excel 打开编辑。</p>
+          <div class="toolbar">
+            <button class="btn btn-mint" onclick="exportData('students')">👥 学生名单</button>
+            <button class="btn btn-mint" onclick="exportData('logs')">📅 班级日志</button>
+            <button class="btn btn-mint" onclick="exportData('todos')">✅ 待办事项</button>
+            <button class="btn btn-mint" onclick="exportData('scores')">📈 成绩记录</button>
+            <button class="btn btn-mint" onclick="exportData('wrongs')">📝 错题汇总</button>
+            <button class="btn btn-mint" onclick="exportData('comms')">💬 家校沟通</button>
+            <button class="btn btn-mint" onclick="exportData('reflections')">💡 课堂反思</button>
+            <button class="btn btn-primary" onclick="exportData('all')">📦 一键导出全部</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:10px">数据概览</h3>
+          <table><tbody id="export-overview"></tbody></table>
+        </div>
+        <div class="card" style="border-color:#fbdada;background:#fffafb">
+          <h3 style="font-size:15px;margin-bottom:8px;color:#d9534f">⚠️ 数据安全提示</h3>
+          <p style="font-size:13px;color:var(--text-2);line-height:1.7">所有数据保存在当前浏览器的本地存储中，不上传任何服务器。<br>建议：① 每周导出一次 Excel 备份；② 不要清理浏览器缓存/站点数据；③ 换电脑时先导出再导入。</p>
+          <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+            <label class="btn btn-gray btn-sm" style="cursor:pointer">📥 导入备份（JSON）<input type="file" accept=".json" style="display:none" onchange="importBackup(event)"></label>
+            <button class="btn btn-gray btn-sm" onclick="exportBackup()">📤 导出备份（JSON）</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑️ 清空所有数据</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="quick-modal">
+  <div class="modal">
+    <h3>✨ 智能识别 · 确认归档</h3>
+    <div class="sub">勾选要保存到的模块，一键保存（可多选）</div>
+    <div class="qm-text" id="qm-text"></div>
+    <div class="qm-row"><span class="lbl">📅 日期</span><input type="date" id="qm-date" onchange="qmState.date=this.value"></div>
+    <div class="qm-row" style="align-items:flex-start"><span class="lbl" style="padding-top:5px">👤 学生</span><div id="qm-students" style="flex:1;display:flex;gap:6px;flex-wrap:wrap"></div></div>
+    <div class="qm-modules" id="qm-modules"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeQuickModal()">取消</button>
+      <button class="btn btn-primary" id="qm-save-btn" onclick="saveQuickAll()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="stu-modal-bg">
+  <div class="modal" style="max-width:640px">
+    <h3 id="stu-modal-title"></h3>
+    <div class="sub" id="stu-modal-sub"></div>
+    <div id="stu-modal-body"></div>
+    <div class="modal-actions"><button class="btn btn-gray" onclick="closeStuModal()">关闭</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'teacher_workbench_v4';
+const HOLIDAYS = [
+  { name: '国庆节', date: '2026-10-01', emoji: '🇨🇳' },
+  { name: '元旦',   date: '2027-01-01', emoji: '🎊' },
+  { name: '春节',   date: '2027-02-06', emoji: '🧧' },
+  { name: '清明节', date: '2027-04-05', emoji: '🌿' },
+  { name: '劳动节', date: '2027-05-01', emoji: '💪' },
+  { name: '端午节', date: '2027-06-09', emoji: '🐉' },
+  { name: '中秋节', date: '2027-09-15', emoji: '🌕' }
+];
+
+const GREETINGS = [
+  "命定的局限尽可永在，但不屈的挑战不可须臾或缺。—— 史铁生",
+  "如果你来访我，我不在，请和我门外的花坐一会儿。—— 汪曾祺",
+  "长风破浪会有时，直挂云帆济沧海。—— 李白",
+  "人间存一角，聊放侧枝花。欣然亦自得，不共赤城霞。—— 汪曾祺",
+  "苦难既然把我推到了悬崖的边缘，那么就让我在这悬崖的边缘坐下来，顺便看看悬崖下的风景。—— 史铁生",
+  "山重水复疑无路，柳暗花明又一村。—— 陆游",
+  "四方食事，不过一碗人间烟火。—— 汪曾祺",
+  "且视他人之疑目如盏盏鬼火，大胆地去走你的夜路。—— 史铁生",
+  "沉舟侧畔千帆过，病树前头万木春。—— 刘禹锡",
+  "人间草木，皆有情缘。—— 汪曾祺",
+  "生命就是这样一个过程，一个不断超越自身局限的过程。—— 史铁生",
+  "不畏浮云遮望眼，自缘身在最高层。—— 王安石",
+  "口味单调一点、耳音差一点，也还不要紧，最要紧的是对生活的兴趣要广一点。—— 汪曾祺",
+  "生如夏花之绚烂，死如秋叶之静美。—— 泰戈尔（借引）",
+  "九万里风鹏正举，风休住，蓬舟吹取三山去。—— 李清照",
+  "人活在世上，就是为了忍受摧残，一直到死。想明了这一点，一切都能泰然处之。—— 汪曾祺",
+  "老骥伏枥，志在千里；烈士暮年，壮心不已。—— 曹操",
+  "我与世界相遇，我自与世界相蚀，我自不辱使命，使我与众生相聚。—— 史铁生",
+  "天生我材必有用，千金散尽还复来。—— 李白",
+  "家人闲坐，灯火可亲。—— 汪曾祺"
+];
+
+let state = {
+  settings: { teacherName: '黄老师', className: '三（3）班', todayCourse: '' },
+  students: [], logs: [], todos: [], scores: [], wrongs: [], reflections: [], comms: [], photos: []
+};
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      Object.keys(p).forEach(k => { state[k] = p[k]; });
+    }
+  } catch (e) { console.warn(e); }
+  ['students','logs','todos','scores','wrongs','reflections','comms','photos'].forEach(k => {
+    if (!Array.isArray(state[k])) state[k] = [];
+  });
+  if (!state.settings) state.settings = { teacherName: '黄老师', className: '三（3）班', todayCourse: '' };
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function uid(p) { return p + Date.now() + Math.random().toString(36).slice(2, 6); }
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function nowTime() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function dateAdd(days) {
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function go(tab) {
+  document.querySelectorAll('.sidebar button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + tab));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (tab === 'home') renderHome();
+  if (tab === 'score') { renderScoreOptions(); renderScoreCurve(); }
+  if (tab === 'export') renderExportOverview();
+}
+document.querySelectorAll('.sidebar button').forEach(btn => {
+  btn.addEventListener('click', () => go(btn.dataset.tab));
+});
+
+function renderAll() {
+  renderHome(); renderStudents(); renderCalendar(); renderLogList();
+  renderTodo(); renderScoreOptions(); renderScores(); renderScoreCurve();
+  refreshStudentSelects(); renderWrong(); renderReflections(); renderComm(); renderPhotos(); renderExportOverview();
+}
+
+function refreshStudentSelects() {
+  const opts = state.students.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  ['score-student','curve-student','wrong-student','comm-student'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">请选择学生</option>' + opts;
+    if (cur && state.students.some(s => s.id === cur)) el.value = cur;
+  });
+  const wf = document.getElementById('wrong-filter'); const wc = wf.value;
+  wf.innerHTML = '<option value="">全部学生</option>' + opts; wf.value = wc;
+  const cf = document.getElementById('comm-filter'); const cc = cf.value;
+  cf.innerHTML = '<option value="">全部学生</option>' + opts; cf.value = cc;
+}
+
+function renderHome() {
+  const d = new Date();
+  const wd = ['日','一','二','三','四','五','六'][d.getDay()];
+  document.getElementById('greet-hi').textContent = `Hi，${state.settings.teacherName} 👋`;
+  document.getElementById('greet-date').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${wd} · ${state.settings.className}`;
+  const dayOfYear = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+  document.getElementById('greet-quote').textContent = GREETINGS[dayOfYear % GREETINGS.length];
+  document.getElementById('stat-students').textContent = state.students.length;
+  document.getElementById('stat-course').textContent = state.settings.todayCourse || '点击设置';
+  document.getElementById('stat-todo').textContent = state.todos.filter(t => !t.done).length;
+  document.getElementById('stat-comm').textContent = state.comms.filter(c => c.status === 'pending').length;
+  renderHolidays(); renderHomeTodo(); renderHomeLog(); renderHomeComm(); renderHomeReflection();
+}
+function editCourse() {
+  const v = prompt('请输入今天的课程（用顿号分隔）', state.settings.todayCourse || '');
+  if (v !== null) { state.settings.todayCourse = v.trim(); save(); renderHome(); }
+}
+function renderHolidays() {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const list = HOLIDAYS.map(h => { const dt = new Date(h.date + 'T00:00:00'); return { ...h, days: Math.round((dt - now) / 86400000) }; }).filter(h => h.days >= 0).sort((a,b) => a.days - b.days);
+  const hero = document.getElementById('holiday-hero'); const listBox = document.getElementById('holiday-list');
+  if (!list.length) { hero.innerHTML = '<div class="muted">暂无节假日数据</div>'; listBox.innerHTML = ''; return; }
+  const next = list[0];
+  hero.innerHTML = `<div class="holiday-emoji">${next.emoji}</div><div><div class="holiday-name">距离「${next.name}」</div><div class="holiday-days">还有 <b>${next.days}</b> 天</div></div>`;
+  listBox.innerHTML = list.slice(1, 7).map(h => `<div class="holiday-chip">${h.emoji} <b>${h.name}</b> ${h.days}天后</div>`).join('');
+}
+function renderHomeTodo() {
+  const box = document.getElementById('home-todo'); const order = { '紧急': 0, '重要': 1, '普通': 2 };
+  const list = state.todos.filter(t => !t.done).sort((a,b) => (order[a.priority]||2) - (order[b.priority]||2)).slice(0, 5);
+  if (!list.length) { box.innerHTML = '<div class="empty" style="padding:18px">暂无待办 🎉</div>'; return; }
+  box.innerHTML = list.map(t => `<div class="hl-item"><span class="bullet" style="background:${t.priority==='紧急'?'#d9534f':t.priority==='重要'?'#e8b95e':'#cbd5e1'}"></span><span class="hl-content">${esc(t.content)}</span><span class="tag ${t.priority==='紧急'?'tag-red':t.priority==='重要'?'tag-mustard':'tag-gray'}">${esc(t.priority)}</span></div>`).join('');
+}
+function renderHomeLog() {
+  const box = document.getElementById('home-log');
+  const list = state.logs.slice().sort((a,b) => (b.date + (b.time||'')).localeCompare(a.date + (a.time||''))).slice(0, 5);
+  if (!list.length) { box.innerHTML = '<div class="empty" style="padding:18px">暂无日志</div>'; return; }
+  box.innerHTML = list.map(l => `<div class="hl-item"><span class="bullet" style="background:var(--blue)"></span><span class="hl-content">${esc(l.content)}</span><span class="hl-time">${esc((l.date||'').slice(5))}</span></div>`).join('');
+}
+function renderHomeComm() {
+  const box = document.getElementById('home-comm'); const list = state.comms.filter(c => c.status === 'pending').slice(0, 5);
+  if (!list.length) { box.innerHTML = '<div class="empty" style="padding:18px">暂无待跟进 🎉</div>'; return; }
+  const today = todayStr();
+  box.innerHTML = list.map(c => { const overdue = c.followUpDate && c.followUpDate < today; return `<div class="hl-item"><span class="bullet" style="background:${overdue?'#d9534f':'var(--pink)'}"></span><span class="hl-content"><b>${esc(c.studentName)}</b> · ${esc(c.content)}</span><span class="tag ${overdue?'tag-red':'tag-pink'}">${overdue?'逾期':(c.followUpDate?esc(c.followUpDate.slice(5)):'待跟进')}</span></div>`; }).join('');
+}
+function renderHomeReflection() {
+  const box = document.getElementById('home-reflection'); const list = state.reflections.slice().reverse().slice(0, 5);
+  if (!list.length) { box.innerHTML = '<div class="empty" style="padding:18px">暂无课堂反思</div>'; return; }
+  box.innerHTML = list.map(r => `<div class="hl-item"><span class="bullet" style="background:var(--lav)"></span><span class="hl-content">${esc(r.title || r.subject)} · ${esc(r.content.slice(0, 40))}${r.content.length>40?'…':''}</span><span class="hl-time">${esc((r.date||'').slice(5))}</span></div>`).join('');
+}
+
+function addStudent() {
+  const name = document.getElementById('stu-name').value.trim(); if (!name) return toast('请输入姓名');
+  const gender = document.getElementById('stu-gender').value; const birthday = document.getElementById('stu-birthday').value;
+  const parent = document.getElementById('stu-parent').value.trim(); const phone = document.getElementById('stu-phone').value.trim();
+  const address = document.getElementById('stu-address').value.trim();
+  state.students.push({ id: uid('s'), name, gender, birthday, parent, phone, address, notes: [] });
+  document.getElementById('stu-name').value = ''; document.getElementById('stu-birthday').value = ''; document.getElementById('stu-parent').value = ''; document.getElementById('stu-phone').value = ''; document.getElementById('stu-address').value = '';
+  save(); renderStudents(); refreshStudentSelects(); renderHome(); toast('已添加 ' + name);
+}
+function delStudent(id) {
+  const stu = state.students.find(s => s.id === id);
+  if (!confirm(`确定删除「${stu ? stu.name : ''}」及其全部关联记录？`)) return;
+  state.students = state.students.filter(s => s.id !== id); state.scores = state.scores.filter(x => x.studentId !== id); state.wrongs = state.wrongs.filter(x => x.studentId !== id); state.comms = state.comms.filter(x => x.studentId !== id);
+  state.logs.forEach(l => { l.students = (l.students || []).filter(sid => sid !== id); });
+  save(); renderAll();
+}
+function renderStudents() {
+  const tbody = document.getElementById('stu-tbody');
+  if (!state.students.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">还没有学生，先在上方添加吧</td></tr>'; return; }
+  tbody.innerHTML = state.students.map(s => `<tr><td>${s.studentId || ''}</td><td><a href="javascript:void(0)" onclick="openStuModal('${s.id}')" style="color:var(--primary);font-weight:600;text-decoration:none">${esc(s.name)}</a></td><td>${esc(s.gender)}</td><td>${esc(s.birthday || '—')}</td><td>${esc(s.parent || '—')}</td><td>${esc(s.phone || '—')}</td><td style="font-size:12px;color:var(--text-2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(s.address||'')}">${esc(s.address || '—')}</td><td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="delStudent('${s.id}')">删除</button></td></tr>`).join('');
+}
+function addStudentNote(studentId, category, content, date) {
+  const stu = state.students.find(s => s.id === studentId); if (!stu) return;
+  if (!stu.notes) stu.notes = []; stu.notes.push({ date: date || todayStr(), category, content });
+}
+function openStuModal(id) {
+  const stu = state.students.find(s => s.id === id); if (!stu) return;
+  document.getElementById('stu-modal-title').textContent = '👤 ' + stu.name;
+  document.getElementById('stu-modal-sub').textContent = `${stu.gender} · 学号：${stu.studentId||'—'} · 生日：${stu.birthday||'—'} · 家长：${stu.parent||'—'} ${stu.phone||''}`;
+  const basicInfo = `<div style="background:#fafbfd;border-radius:12px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.8;color:var(--text-2)"><div><b>家庭住址：</b>${esc(stu.address || '未填写')}</div></div>`;
+  const notes = (stu.notes || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const body = document.getElementById('stu-modal-body'); let html = basicInfo;
+  if (!notes.length) { html += '<div class="empty">还没有归档记录。<br>用首页的「一句话速记」输入内容时会自动归档到这里。</div>'; }
+  else { html += '<div class="timeline">' + notes.map(n => `<div class="tl-item"><div class="tl-date"><span>${esc(n.date)}</span><span class="tag tag-gray">${esc(n.category||'记录')}</span></div><div class="tl-content">${esc(n.content)}</div></div>`).join('') + '</div>'; }
+  body.innerHTML = html; document.getElementById('stu-modal-bg').classList.add('show');
+}
+function closeStuModal() { document.getElementById('stu-modal-bg').classList.remove('show'); }
+
+let calYear, calMonth, selectedDate;
+const _d = new Date(); calYear = _d.getFullYear(); calMonth = _d.getMonth(); selectedDate = todayStr();
+function changeMonth(d) { calMonth += d; if (calMonth < 0) { calMonth = 11; calYear--; } if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+function renderCalendar() {
+  document.getElementById('cal-title').textContent = calYear + '年' + (calMonth + 1) + '月';
+  const grid = document.getElementById('cal-grid'); const wd = ['一','二','三','四','五','六','日'];
+  let html = wd.map(w => `<div class="head">${w}</div>`).join('');
+  const first = new Date(calYear, calMonth, 1); let off = (first.getDay() + 6) % 7;
+  const dim = new Date(calYear, calMonth + 1, 0).getDate(); const pd = new Date(calYear, calMonth, 0).getDate();
+  for (let i = off - 1; i >= 0; i--) html += `<div class="cal-day other">${pd - i}</div>`;
+  for (let d = 1; d <= dim; d++) {
+    const ds = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const has = state.logs.some(l => l.date === ds); const cls = ['cal-day'];
+    if (ds === todayStr()) cls.push('today'); if (ds === selectedDate) cls.push('selected'); if (has) cls.push('has-log');
+    html += `<div class="${cls.join(' ')}" onclick="selectDate('${ds}')">${d}</div>`;
+  }
+  const rest = (7 - (off + dim) % 7) % 7; for (let d = 1; d <= rest; d++) html += `<div class="cal-day other">${d}</div>`;
+  grid.innerHTML = html;
+}
+function selectDate(ds) { selectedDate = ds; renderCalendar(); renderLogList(); }
+function renderLogList() {
+  const [y, m, d] = selectedDate.split('-'); document.getElementById('log-date-title').textContent = `${y}年${parseInt(m)}月${parseInt(d)}日 的记录`;
+  const list = state.logs.filter(l => l.date === selectedDate).sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const box = document.getElementById('log-list');
+  if (!list.length) { box.innerHTML = '<div class="empty">这一天还没有记录</div>'; return; }
+  box.innerHTML = list.map(l => {
+    const cls = l.category === '家校沟通' ? 'tag-mint' : l.category === '成绩记录' ? 'tag-blue' : l.category === '错题汇总' ? 'tag-mustard' : l.category === '课堂反思' ? 'tag-lav' : 'tag-gray';
+    const names = (l.students || []).map(id => { const s = state.students.find(x => x.id === id); return s ? s.name : ''; }).filter(Boolean).join('、');
+    return `<div class="log-item"><div class="meta"><span class="tag ${cls}">${esc(l.category)}</span><span class="time">${esc(l.time||'')}</span>${names ? `<span class="badge">涉及：${esc(names)}</span>` : ''}<button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="delLog('${l.id}')">删除</button></div><div class="content">${esc(l.content)}</div></div>`;
+  }).join('');
+}
+function delLog(id) { if (!confirm('删除这条日志？')) return; state.logs = state.logs.filter(l => l.id !== id); save(); renderCalendar(); renderLogList(); renderHome(); }
+
+function addTodo() {
+  const content = document.getElementById('todo-input').value.trim(); if (!content) return toast('请输入待办内容');
+  const dueDate = document.getElementById('todo-date').value; const priority = document.getElementById('todo-priority').value;
+  state.todos.push({ id: uid('t'), content, done: false, priority, dueDate, createdAt: todayStr() });
+  document.getElementById('todo-input').value = ''; document.getElementById('todo-date').value = ''; save(); renderTodo(); renderHome();
+}
+function toggleTodo(id) { const t = state.todos.find(x => x.id === id); if (t) { t.done = !t.done; save(); renderTodo(); renderHome(); } }
+function delTodo(id) { state.todos = state.todos.filter(t => t.id !== id); save(); renderTodo(); renderHome(); }
+function renderTodo() {
+  const box = document.getElementById('todo-list'); const order = { '紧急': 0, '重要': 1, '普通': 2 };
+  const list = state.todos.slice().sort((a,b) => { if (a.done !== b.done) return a.done ? 1 : -1; return (order[a.priority]||2) - (order[b.priority]||2); });
+  if (!list.length) { box.innerHTML = '<div class="empty">暂无待办事项 🎉</div>'; return; }
+  box.innerHTML = list.map(t => { const cls = t.priority === '紧急' ? 'tag-red' : t.priority === '重要' ? 'tag-mustard' : 'tag-gray'; return `<div class="log-item" style="display:flex;align-items:center;gap:12px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" style="width:auto;flex:0 0 auto"><div style="flex:1;${t.done?'text-decoration:line-through;color:var(--text-3)':''}">${esc(t.content)}</div><span class="tag ${cls}">${esc(t.priority)}</span>${t.dueDate ? `<span class="badge">📅 ${esc(t.dueDate)}</span>` : ''}<button class="btn btn-danger btn-sm" onclick="delTodo('${t.id}')">删除</button></div>`; }).join('');
+}
+
+function renderScoreOptions() { refreshStudentSelects(); }
+function addScore() {
+  const sid = document.getElementById('score-student').value; if (!sid) return toast('请选择学生');
+  const stu = state.students.find(s => s.id === sid); const subject = document.getElementById('score-subject').value;
+  const exam = document.getElementById('score-exam').value.trim() || '测试'; const score = parseFloat(document.getElementById('score-num').value);
+  const total = parseFloat(document.getElementById('score-total').value) || 100; if (isNaN(score)) return toast('请输入分数');
+  const date = todayStr(); state.scores.push({ id: uid('sc'), date, studentId: sid, studentName: stu.name, subject, exam, score, total });
+  addStudentNote(sid, '成绩记录', `${subject} ${exam}：${score}/${total}`);
+  document.getElementById('score-num').value = ''; document.getElementById('score-exam').value = '';
+  save(); renderScores(); renderScoreCurve(); renderStudents(); renderHome(); toast('已录入成绩 ✓');
+}
+function delScore(id) { state.scores = state.scores.filter(s => s.id !== id); save(); renderScores(); renderScoreCurve(); renderStudents(); }
+function renderScores() {
+  const tbody = document.getElementById('score-tbody'); const list = state.scores.slice().reverse();
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无成绩记录</td></tr>'; return; }
+  tbody.innerHTML = list.map(s => `<tr><td>${esc(s.date)}</td><td>${esc(s.studentName)}</td><td>${esc(s.subject)}</td><td>${esc(s.exam)}</td><td><b>${s.score}</b> / ${s.total}</td><td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="delScore('${s.id}')">删除</button></td></tr>`).join('');
+}
+function previewScorePhoto(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { document.getElementById('score-photo-preview').innerHTML = `<img src="${ev.target.result}" style="max-width:100%;max-height:280px;border-radius:12px;border:1px solid var(--border)">`; }; r.readAsDataURL(f); }
+function renderScoreCurve() {
+  const box = document.getElementById('curve-chart'); const sid = document.getElementById('curve-student').value; const subject = document.getElementById('curve-subject').value;
+  if (!sid) { box.innerHTML = '<div class="empty">请选择学生查看成绩曲线</div>'; return; }
+  let list = state.scores.filter(s => s.studentId === sid); if (subject) list = list.filter(s => s.subject === subject);
+  list.sort((a,b) => a.date.localeCompare(b.date)); if (list.length < 2) { box.innerHTML = '<div class="empty">至少需要 2 次成绩记录才能生成曲线</div>'; return; }
+  const W = 720, H = 260, PL = 46, PR = 20, PT = 20, PB = 40; const chartW = W - PL - PR, chartH = H - PT - PB; const n = list.length; const stepX = n > 1 ? chartW / (n - 1) : 0;
+  const pts = list.map((s, i) => { const pct = s.score / s.total; const x = PL + i * stepX; const y = PT + chartH - pct * chartH; return { x, y, s }; });
+  const path = pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+  const area = path + ` L${pts[n-1].x.toFixed(1)},${PT+chartH} L${pts[0].x.toFixed(1)},${PT+chartH} Z`;
+  const gridLines = [0, 25, 50, 75, 100].map(pct => { const y = PT + chartH - (pct / 100) * chartH; return `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#eef1f6" stroke-width="1"/><text x="${PL-8}" y="${y+4}" text-anchor="end" font-size="11" fill="#a8b2c1">${pct}</text>`; }).join('');
+  box.innerHTML = `<div class="curve-wrap"><svg class="curve-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef8a8a" stop-opacity=".28"/><stop offset="100%" stop-color="#ef8a8a" stop-opacity="0"/></linearGradient></defs>${gridLines}<path d="${area}" fill="url(#curveGrad)"/><path d="${path}" fill="none" stroke="#ef8a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="5" fill="#fff" stroke="#ef8a8a" stroke-width="2.5"/><text x="${p.x}" y="${p.y-12}" text-anchor="middle" font-size="12" font-weight="600" fill="#ef8a8a">${p.s.score}</text><text x="${p.x}" y="${H-PB+22}" text-anchor="middle" font-size="10.5" fill="#a8b2c1">${p.s.date.slice(5)}</text>`).join('')}</svg><div class="curve-legend">${[...new Set(list.map(s => s.subject))].map((s, i) => { const colors = ['#ef8a8a','#7fb0dd','#7fc9b4','#e8b95e']; return `<span><span class="dot" style="background:${colors[i%4]}"></span>${s}</span>`; }).join('')}</div></div>`;
+}
+
+function addWrong() {
+  const sid = document.getElementById('wrong-student').value; if (!sid) return toast('请选择学生');
+  const stu = state.students.find(s => s.id === sid); const subject = document.getElementById('wrong-subject').value; const content = document.getElementById('wrong-content').value.trim();
+  if (!content) return toast('请输入错题内容'); state.wrongs.push({ id: uid('w'), date: todayStr(), studentId: sid, studentName: stu.name, subject, content, mastered: false });
+  addStudentNote(sid, '错题汇总', `【${subject}】${content}`); document.getElementById('wrong-content').value = ''; save(); renderWrong(); renderStudents(); toast('已添加错题 ✓');
+}
+function toggleWrong(id) { const w = state.wrongs.find(x => x.id === id); if (w) { w.mastered = !w.mastered; save(); renderWrong(); } }
+function delWrong(id) { state.wrongs = state.wrongs.filter(w => w.id !== id); save(); renderWrong(); }
+function renderWrong() {
+  const box = document.getElementById('wrong-list'); const filter = document.getElementById('wrong-filter').value; const status = document.getElementById('wrong-status').value;
+  let list = state.wrongs.slice().reverse(); if (filter) list = list.filter(w => w.studentId === filter); if (status !== '') list = list.filter(w => String(w.mastered ? 1 : 0) === status);
+  if (!list.length) { box.innerHTML = '<div class="empty">暂无错题记录</div>'; return; }
+  box.innerHTML = list.map(w => `<div class="log-item" style="display:flex;align-items:flex-start;gap:12px"><input type="checkbox" ${w.mastered?'checked':''} onchange="toggleWrong('${w.id}')" style="width:auto;flex:0 0 auto;margin-top:5px"><div style="flex:1"><div style="font-size:12.5px;color:var(--text-2);margin-bottom:4px">${esc(w.date)} · <b>${esc(w.studentName)}</b> · ${esc(w.subject)} ${w.mastered ? '<span class="tag tag-mint">已掌握</span>' : '<span class="tag tag-mustard">未掌握</span>'}</div><div style="font-size:13.5px;color:#3b4657;line-height:1.6">${esc(w.content)}</div></div><button class="btn btn-danger btn-sm" onclick="delWrong('${w.id}')">删除</button></div>`).join('');
+}
+
+function addReflection() {
+  const subject = document.getElementById('ref-subject').value; const title = document.getElementById('ref-title').value.trim(); const rating = parseInt(document.getElementById('ref-rating').value); const content = document.getElementById('ref-content').value.trim();
+  if (!content) return toast('请写下反思内容'); state.reflections.push({ id: uid('r'), date: todayStr(), subject, title, rating, content });
+  document.getElementById('ref-title').value = ''; document.getElementById('ref-content').value = ''; save(); renderReflections(); renderHome(); toast('反思已保存 ✓');
+}
+function delReflection(id) { state.reflections = state.reflections.filter(r => r.id !== id); save(); renderReflections(); renderHome(); }
+function renderReflections() {
+  const box = document.getElementById('ref-list'); const list = state.reflections.slice().reverse();
+  if (!list.length) { box.innerHTML = '<div class="empty">暂无课堂反思记录</div>'; return; }
+  box.innerHTML = list.map(r => `<div class="log-item"><div class="meta"><span class="tag tag-lav">${esc(r.subject)}</span>${r.title ? `<span class="badge">${esc(r.title)}</span>` : ''}<span class="time">${esc(r.date)}</span><span style="color:#e8b95e;font-size:12.5px;margin-left:auto">${'⭐'.repeat(r.rating||4)}</span><button class="btn btn-danger btn-sm" onclick="delReflection('${r.id}')">删除</button></div><div class="content">${esc(r.content)}</div></div>`).join('');
+}
+
+function toggleFollowInput() { const on = document.getElementById('comm-need-follow').checked; document.getElementById('comm-follow-date').disabled = !on; document.getElementById('comm-follow-note').disabled = !on; if (on && !document.getElementById('comm-follow-date').value) { document.getElementById('comm-follow-date').value = dateAdd(3); } }
+function addComm() {
+  const sid = document.getElementById('comm-student').value; if (!sid) return toast('请选择学生');
+  const stu = state.students.find(s => s.id === sid); const type = document.getElementById('comm-type').value; const content = document.getElementById('comm-content').value.trim();
+  if (!content) return toast('请输入沟通内容'); const needFollow = document.getElementById('comm-need-follow').checked; const followUpDate = needFollow ? document.getElementById('comm-follow-date').value : ''; const followUpNote = needFollow ? document.getElementById('comm-follow-note').value.trim() : '';
+  state.comms.push({ id: uid('c'), date: todayStr(), studentId: sid, studentName: stu.name, type, content, status: needFollow ? 'pending' : 'done', followUpDate, followUpNote });
+  addStudentNote(sid, '家校沟通', `【${type}】${content}${followUpNote ? ' / 跟进：' + followUpNote : ''}`); document.getElementById('comm-content').value = ''; document.getElementById('comm-follow-note').value = ''; document.getElementById('comm-need-follow').checked = false; toggleFollowInput(); save(); renderComm(); renderStudents(); renderHome(); toast('已记录家校沟通 ✓');
+}
+function markCommDone(id) { const c = state.comms.find(x => x.id === id); if (c) { c.status = 'done'; save(); renderComm(); renderHome(); } }
+function delComm(id) { state.comms = state.comms.filter(c => c.id !== id); save(); renderComm(); renderHome(); }
+function renderComm() {
+  const box = document.getElementById('comm-list'); const filter = document.getElementById('comm-filter').value; const sf = document.getElementById('comm-status-filter').value; const today = todayStr();
+  let list = state.comms.slice().reverse(); if (filter) list = list.filter(c => c.studentId === filter);
+  if (sf === 'pending') list = list.filter(c => c.status === 'pending' && (!c.followUpDate || c.followUpDate >= today)); else if (sf === 'overdue') list = list.filter(c => c.status === 'pending' && c.followUpDate && c.followUpDate < today); else if (sf === 'done') list = list.filter(c => c.status === 'done');
+  if (!list.length) { box.innerHTML = '<div class="empty">暂无家校沟通记录</div>'; return; }
+  box.innerHTML = list.map(c => { const overdue = c.status === 'pending' && c.followUpDate && c.followUpDate < today; const statusTag = c.status === 'done' ? '<span class="tag tag-mint">已完成</span>' : overdue ? '<span class="tag tag-red">已逾期</span>' : '<span class="tag tag-pink">待跟进</span>'; return `<div class="log-item"><div class="meta"><span class="tag tag-mint">${esc(c.type)}</span><span class="badge">${esc(c.studentName)}</span><span class="time">${esc(c.date)}</span>${statusTag}${c.status === 'pending' ? `<button class="btn btn-mint btn-sm" onclick="markCommDone('${c.id}')">标记完成</button>` : ''}<button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="delComm('${c.id}')">删除</button></div><div class="content">${esc(c.content)}</div>${c.followUpNote ? `<div style="font-size:12.5px;color:var(--text-2);margin-top:5px">📌 跟进：${esc(c.followUpNote)}${c.followUpDate ? ' · ' + esc(c.followUpDate) : ''}</div>` : ''}</div>`; }).join('');
+}
+
+function uploadPhotos() {
+  const files = document.getElementById('photo-file').files; if (!files || !files.length) return toast('请选择图片');
+  const desc = document.getElementById('photo-desc').value.trim(); let done = 0;
+  Array.from(files).forEach(file => { compressImage(file, 900, 0.72, dataUrl => { state.photos.push({ id: uid('p'), date: todayStr(), desc, dataUrl }); done++; if (done === files.length) { save(); renderPhotos(); document.getElementById('photo-file').value = ''; document.getElementById('photo-desc').value = ''; toast('已上传 ' + done + ' 张 ✓'); } }); });
+}
+function compressImage(file, maxW, quality, cb) { const reader = new FileReader(); reader.onload = e => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); let w = img.width, h = img.height; if (w > maxW) { h = h * maxW / w; w = maxW; } canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); cb(canvas.toDataURL('image/jpeg', quality)); }; img.src = e.target.result; }; reader.readAsDataURL(file); }
+function delPhoto(id) { if (!confirm('删除这张照片？')) return; state.photos = state.photos.filter(p => p.id !== id); save(); renderPhotos(); }
+function renderPhotos() { const grid = document.getElementById('photo-grid'); if (!state.photos.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">还没有照片</div>'; return; } grid.innerHTML = state.photos.slice().reverse().map(p => `<div class="photo-item"><button class="del" onclick="delPhoto('${p.id}')">×</button><img src="${p.dataUrl}" alt=""><div class="info"><div style="color:var(--text-3)">${esc(p.date)}</div>${p.desc ? `<div>${esc(p.desc)}</div>` : ''}</div></div>`).join(''); }
+
+const MODULES = [
+  { key: 'student', name: '学生档案', desc: '归档到个人成长记录', icon: '👤', color: 'blue' },
+  { key: 'log', name: '班级日志', desc: '记入当天班级日志', icon: '📅', color: 'pink' },
+  { key: 'comm', name: '家校沟通', desc: '生成家校沟通记录', icon: '💬', color: 'mint' },
+  { key: 'todo', name: '待办事项', desc: '加入待办清单', icon: '✅', color: 'mustard' },
+  { key: 'wrong', name: '错题汇总', desc: '记入错题本', icon: '📝', color: 'lav' },
+  { key: 'reflection', name: '课堂反思', desc: '记入课堂记录反思', icon: '💡', color: 'pink' }
+];
+const COLOR_MAP = { blue: { bg: 'var(--blue-soft)', fg: '#4a7fb0' }, pink: { bg: 'var(--pink-soft)', fg: '#c76e93' }, mint: { bg: 'var(--mint-soft)', fg: '#3d9a82' }, mustard: { bg: 'var(--mustard-soft)', fg: '#b08b2e' }, lav: { bg: 'var(--lav-soft)', fg: '#7d6bb5' } };
+const KEYWORDS = { comm: ['家长','妈妈','爸爸','电话','微信','沟通','联系','反映','反馈','交流','家访','面谈','约谈','来访','短信','私信'], todo: ['明天','后天','记得','提醒','待办','需要','准备','收集','上交','截止','安排','通知'], wrong: ['错题','做错','不会','写错','算错','答错','错在','这道题','这道','做不来'], reflection: ['课堂','上课','教学','反思','今天讲','这节课','导入','环节','板书','提问'], score: ['成绩','分数','测验','考试','听写','默写','测评','考了','考得','得分','满分','及格'] };
+function detectSubject(text) { for (const s of ['语文','数学','英语','科学']) if (text.includes(s)) return s; return '未填'; }
+function analyzeText(text) {
+  const students = state.students.filter(s => text.includes(s.name)).map(s => s.id); const mods = [];
+  if (students.length) mods.push('student'); mods.push('log');
+  if (KEYWORDS.comm.some(w => text.includes(w))) mods.push('comm'); if (KEYWORDS.todo.some(w => text.includes(w))) mods.push('todo');
+  if (KEYWORDS.wrong.some(w => text.includes(w))) mods.push('wrong'); if (KEYWORDS.reflection.some(w => text.includes(w))) mods.push('reflection');
+  return { students, modules: [...new Set(mods)] };
+}
+let qmState = { text: '', date: '', students: [], modules: [] };
+function openQuickModal() { const text = document.getElementById('quick-input').value.trim(); if (!text) return toast('请输入内容'); const r = analyzeText(text); qmState = { text, date: todayStr(), students: r.students, modules: r.modules }; renderQuickModal(); document.getElementById('quick-modal').classList.add('show'); }
+function renderQuickModal() {
+  document.getElementById('qm-text').textContent = '「' + qmState.text + '」'; document.getElementById('qm-date').value = qmState.date;
+  const stuBox = document.getElementById('qm-students'); if (!state.students.length) { stuBox.innerHTML = '<span class="muted">暂无学生数据，可先去学生档案添加</span>'; } else { stuBox.innerHTML = state.students.map(s => `<span class="stu-chip ${qmState.students.includes(s.id)?'on':''}" onclick="toggleQmStudent('${s.id}')">${esc(s.name)}</span>`).join(''); }
+  document.getElementById('qm-modules').innerHTML = MODULES.map(m => { const c = COLOR_MAP[m.color]; const on = qmState.modules.includes(m.key); return `<div class="module-card ${on?'on':''}" onclick="toggleQmModule('${m.key}')"><div class="mc-icon" style="background:${c.bg};color:${c.fg}">${m.icon}</div><div class="mc-info"><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div></div><div class="mc-check">✓</div></div>`; }).join('');
+  const n = qmState.modules.length; const btn = document.getElementById('qm-save-btn'); btn.textContent = n ? `一键保存到 ${n} 个模块` : '请选择至少一个模块'; btn.disabled = !n;
+}
+function toggleQmStudent(id) { const i = qmState.students.indexOf(id); if (i >= 0) qmState.students.splice(i, 1); else qmState.students.push(id); renderQuickModal(); }
+function toggleQmModule(key) { const i = qmState.modules.indexOf(key); if (i >= 0) qmState.modules.splice(i, 1); else qmState.modules.push(key); renderQuickModal(); }
+function closeQuickModal() { document.getElementById('quick-modal').classList.remove('show'); qmState = { text: '', date: '', students: [], modules: [] }; }
+function saveQuickAll() {
+  const { text, date, students, modules } = qmState; if (!modules.length) return; const time = nowTime(); const subject = detectSubject(text);
+  modules.forEach(m => {
+    if (m === 'student') { students.forEach(sid => addStudentNote(sid, '综合记录', text, date)); }
+    else if (m === 'log') { state.logs.push({ id: uid('l'), date, time, category: '班级事务', content: text, students: students.slice() }); }
+    else if (m === 'comm') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date, studentId: sid, studentName: stu.name, type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date, studentId: '', studentName: '（未指定）', type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); } }
+    else if (m === 'todo') { state.todos.push({ id: uid('t'), content: text, done: false, priority: '普通', dueDate: date, createdAt: todayStr() }); }
+    else if (m === 'wrong') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date, studentId: sid, studentName: stu.name, subject, content: text, mastered: false }); }); } }
+    else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date, subject, title: '', rating: 4, content: text }); }
+  });
+  save(); document.getElementById('quick-input').value = ''; closeQuickModal(); renderAll(); toast(`已保存到 ${modules.length} 个模块 ✓`);
+}
+document.getElementById('quick-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); openQuickModal(); } });
+
+function downloadExcel(filename, sheets) {
+  if (typeof XLSX !== 'undefined') { const wb = XLSX.utils.book_new(); sheets.forEach(sh => { const rows = sh.rows.length ? sh.rows : [{ '(提示)': '暂无数据' }]; const ws = XLSX.utils.json_to_sheet(rows); XLSX.utils.book_append_sheet(wb, ws, sh.name.slice(0, 31)); }); XLSX.writeFile(wb, filename + '.xlsx'); }
+  else { let csv = ''; sheets.forEach(sh => { csv += '### ' + sh.name + '\n'; if (sh.rows.length) { const keys = Object.keys(sh.rows[0]); csv += keys.join(',') + '\n'; sh.rows.forEach(r => { csv += keys.map(k => `"${String(r[k] ?? '').replace(/"/g,'""')}"`).join(',') + '\n'; }); } csv += '\n'; }); const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename + '.csv'; a.click(); }
+  toast('已导出 ✓');
+}
+function getSheets(type) {
+  const studentName = id => { const s = state.students.find(x => x.id === id); return s ? s.name : ''; };
+  const all = {
+    students: { name: '学生名单', rows: state.students.map((s, i) => ({ 序号: i + 1, 姓名: s.name, 性别: s.gender, 学号: s.studentId||'', 生日: s.birthday||'', 家长姓名: s.parent||'', 家长电话: s.phone||'', 家庭住址: s.address||'', 档案记录数: (s.notes || []).length })) },
+    logs: { name: '班级日志', rows: state.logs.map(l => ({ 日期: l.date, 时间: l.time || '', 分类: l.category, 内容: l.content, 涉及学生: (l.students || []).map(studentName).filter(Boolean).join('、') })) },
+    todos: { name: '待办事项', rows: state.todos.map(t => ({ 内容: t.content, 状态: t.done ? '已完成' : '未完成', 优先级: t.priority, 截止日期: t.dueDate || '', 创建日期: t.createdAt || '' })) },
+    scores: { name: '成绩记录', rows: state.scores.map(s => ({ 日期: s.date, 学生: s.studentName, 科目: s.subject, 考试: s.exam, 分数: s.score, 满分: s.total, 得分率: (s.score / s.total * 100).toFixed(1) + '%' })) },
+    wrongs: { name: '错题汇总', rows: state.wrongs.map(w => ({ 日期: w.date, 学生: w.studentName, 科目: w.subject, 错题内容: w.content, 状态: w.mastered ? '已掌握' : '未掌握' })) },
+    comms: { name: '家校沟通', rows: state.comms.map(c => ({ 日期: c.date, 学生: c.studentName, 类型: c.type, 沟通内容: c.content, 状态: c.status === 'done' ? '已完成' : '待跟进', 跟进日期: c.followUpDate || '', 跟进事项: c.followUpNote || '' })) },
+    reflections: { name: '课堂反思', rows: state.reflections.map(r => ({ 日期: r.date, 学科: r.subject, 课题: r.title || '', 满意度: '⭐'.repeat(r.rating || 4), 反思内容: r.content })) }
+  };
+  if (type === 'all') return Object.values(all); return [all[type]];
+}
+function exportData(type) { const sheets = getSheets(type); const fn = type === 'all' ? `三3班数据备份_${todayStr()}` : `三3班_${sheets[0].name}_${todayStr()}`; downloadExcel(fn, sheets); }
+function renderExportOverview() {
+  const tbody = document.getElementById('export-overview');
+  const rows = [['👥 学生档案', state.students.length + ' 人', (state.students.reduce((a,s) => a + (s.notes||[]).length, 0)) + ' 条档案记录'],['📅 班级日志', state.logs.length + ' 条', '覆盖 ' + new Set(state.logs.map(l => l.date)).size + ' 天'],['✅ 待办事项', state.todos.length + ' 条', state.todos.filter(t => !t.done).length + ' 条未完成'],['📈 成绩记录', state.scores.length + ' 条', new Set(state.scores.map(s => s.subject)).size + ' 个科目'],['📝 错题汇总', state.wrongs.length + ' 道', state.wrongs.filter(w => !w.mastered).length + ' 道未掌握'],['💡 课堂反思', state.reflections.length + ' 篇', ''],['💬 家校沟通', state.comms.length + ' 次', state.comms.filter(c => c.status === 'pending').length + ' 次待跟进'],['📷 班级相册', state.photos.length + ' 张', '']];
+  tbody.innerHTML = rows.map(r => `<tr><td style="color:var(--text-2);width:130px">${r[0]}</td><td><b>${r[1]}</b></td><td class="muted" style="font-size:12.5px">${r[2]}</td></tr>`).join('');
+}
+function exportBackup() { const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `三3班数据备份_${todayStr()}.json`; a.click(); toast('备份已导出 ✓'); }
+function importBackup(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { const data = JSON.parse(ev.target.result); if (!confirm('导入将覆盖当前所有数据，确定继续？')) return; state = data; save(); renderAll(); toast('导入成功 ✓'); } catch (err) { toast('文件格式错误'); } }; r.readAsText(f); e.target.value = ''; }
+function clearAllData() { if (!confirm('⚠️ 确定清空所有数据？此操作不可恢复！')) return; if (!confirm('再次确认：真的要清空全部数据吗？')) return; localStorage.removeItem(KEY); location.reload(); }
+
+function initRealData() {
+  if (state.students.length > 0) return;
+  const rawStudents = [
+    { id: 's1', name: '陈沐橙', gender: '女', studentId: '1', birthday: '2017-09-21', parent: '黄建梅', phone: '15168026090', address: '浙江省东阳市吴宁街道人民路113号金溢花苑' },
+    { id: 's2', name: '陈晏旭', gender: '男', studentId: '2', birthday: '2018-02-28', parent: '张雅倩', phone: '13967495054', address: '浙江省东阳市吴宁街道艺海花城2-2-1901' },
+    { id: 's3', name: '丁玮', gender: '女', studentId: '3', birthday: '2018-02-12', parent: '丁吟霜', phone: '18164591002', address: '浙江省东阳市白云街道学陶村58栋2号' },
+    { id: 's4', name: '傅子浩', gender: '男', studentId: '4', birthday: '2018-02-14', parent: '许倩倩', phone: '13858976235', address: '浙江省东阳市吴宁街道佐店新村2幢东单元102室' },
+    { id: 's5', name: '葛屹涵', gender: '男', studentId: '5', birthday: '2017-09-30', parent: '陆飒飒', phone: '18966058388', address: '浙江省东阳市艺海花城2-2-1701' },
+    { id: 's6', name: '龚筠婷', gender: '女', studentId: '6', birthday: '2017-12-19', parent: '王海棠', phone: '13566726505', address: '浙江省东阳市湖莲东街锦溪北苑1栋2单元301' },
+    { id: 's7', name: '胡凡', gender: '女', studentId: '7', birthday: '2017-10-11', parent: '吕丰英', phone: '17815542456', address: '浙江省东阳市吴宁街道亭前外路119号后排' },
+    { id: 's8', name: '胡雨菲', gender: '女', studentId: '8', birthday: '2018-08-31', parent: '高佳艳', phone: '13665848720', address: '浙江省东阳市吴宁街道环城北路金宅村43号' },
+    { id: 's9', name: '李金翂', gender: '女', studentId: '9', birthday: '2017-12-30', parent: '金闪闪', phone: '13735632809', address: '浙江省东阳市吴宁街道振兴路555号振兴花苑2幢101号' },
+    { id: 's10', name: '厉博涵', gender: '女', studentId: '10', birthday: '2017-12-03', parent: '张珊珊', phone: '18257878789', address: '浙江省金华市东阳市吴宁街道泳东路1号' },
+    { id: 's11', name: '刘若涵', gender: '女', studentId: '11', birthday: '2018-02-10', parent: '张宁', phone: '13505895743', address: '浙江省东阳市陈宅街北巷29号' },
+    { id: 's12', name: '刘子琨', gender: '男', studentId: '12', birthday: '2018-04-06', parent: '孙萍萍', phone: '15958495287', address: '浙江省东阳市吴宁街道荷塘社区孙村' },
+    { id: 's13', name: '楼珞汐', gender: '女', studentId: '13', birthday: '2018-05-29', parent: '马千鋆', phone: '18758931851', address: '浙江省东阳市吴宁街道振兴路267号601室' },
+    { id: 's14', name: '楼盈含', gender: '女', studentId: '14', birthday: '2018-05-12', parent: '郭振园', phone: '15757961113', address: '浙江省东阳市吴宁街道东艺名园1-2-502' },
+    { id: 's15', name: '楼子灏', gender: '男', studentId: '15', birthday: '2018-04-14', parent: '单菲菲', phone: '13735637323', address: '浙江省东阳市通江路18号北站花苑5幢2单元101' },
+    { id: 's16', name: '卢晨曦', gender: '男', studentId: '16', birthday: '2018-02-09', parent: '黄建亚', phone: '15088296592', address: '浙江省东阳市吴宁街道东河路21-1号' },
+    { id: 's17', name: '卢嘉程', gender: '男', studentId: '17', birthday: '2017-12-16', parent: '单丽瑛', phone: '13858979524', address: '浙江省东阳市吴宁街道亭前外路18-3号' },
+    { id: 's18', name: '卢俊浩', gender: '男', studentId: '18', birthday: '2018-07-30', parent: '陈丽丽', phone: '13486919806', address: '浙江省金华市东阳吴宁街道广诚悦府3-2-603' },
+    { id: 's19', name: '卢鸣悦', gender: '女', studentId: '19', birthday: '2017-10-03', parent: '虞晓霞', phone: '15257921156', address: '浙江省东阳市吴宁街道东河路15-5号' },
+    { id: 's20', name: '卢翼轩', gender: '男', studentId: '20', birthday: '2017-12-21', parent: '丁洁', phone: '13757938419', address: '浙江省东阳市卢宅三村花厅路西27号' },
+    { id: 's21', name: '卢梓曼', gender: '女', studentId: '21', birthday: '2018-04-10', parent: '徐丽娜', phone: '18395926290', address: '浙江省东阳市吴宁街道环城东路西16号' },
+    { id: 's22', name: '吕思璇', gender: '女', studentId: '22', birthday: '2018-02-06', parent: '徐红兰', phone: '13625896823', address: '浙江省东阳市吴宁街道振兴路607号三单元502室' },
+    { id: 's23', name: '马澄程', gender: '女', studentId: '23', birthday: '2017-09-09', parent: '王红芳', phone: '13282941431', address: '浙江省东阳市博士路94号金科花园' },
+    { id: 's24', name: '马宇辰', gender: '男', studentId: '24', birthday: '2018-03-11', parent: '邵玉平', phone: '15067053505', address: '浙江省东阳市吴宁街道人民路67号3单元402' },
+    { id: 's25', name: '潘宇晨', gender: '男', studentId: '25', birthday: '2018-07-31', parent: '谢彩红', phone: '15957903106', address: '浙江省东阳市吴宁街道人民路81号二单元301' },
+    { id: 's26', name: '申屠颢廷', gender: '男', studentId: '26', birthday: '2018-07-18', parent: '郭晶晶', phone: '18257033562', address: '浙江省东阳市佐店新村28幢' },
+    { id: 's27', name: '施皓霖', gender: '男', studentId: '27', birthday: '2017-10-17', parent: '吴伟英', phone: '13706797056', address: '浙江省东阳市吴宁街道岘峰公寓2单元402' },
+    { id: 's28', name: '施景豪', gender: '男', studentId: '28', birthday: '2018-07-18', parent: '詹涵羽', phone: '13777904667', address: '浙江省东阳市吴宁街道人民路77号中单元六楼601' },
+    { id: 's29', name: '王靖雯', gender: '女', studentId: '29', birthday: '2018-06-03', parent: '朱晓萍', phone: '13858972399', address: '浙江省金华市东阳市振兴路555号1单元601室' },
+    { id: 's30', name: '王瑜涵', gender: '女', studentId: '30', birthday: '2018-02-14', parent: '何晓丽', phone: '15067589189', address: '浙江省东阳市吴宁街道涵园小区4-2-101' },
+    { id: 's31', name: '吴睿泽', gender: '男', studentId: '31', birthday: '2017-10-01', parent: '方云云', phone: '15888944360', address: '浙江省东阳市新安街广城悦府7栋2单元304室' },
+    { id: 's32', name: '徐可馨', gender: '女', studentId: '32', birthday: '2018-02-01', parent: '江紫薇', phone: '15267986864', address: '浙江省东阳市吴宁街道金科花园10幢一单元401' },
+    { id: 's33', name: '许恩宁', gender: '男', studentId: '33', birthday: '2018-07-23', parent: '俞露露', phone: '15372978556', address: '浙江省东阳市新安街广城悦府3-1-602' },
+    { id: 's34', name: '许梓莹', gender: '女', studentId: '34', birthday: '2018-04-01', parent: '刘璐', phone: '15058516846', address: '浙江省东阳市中山路9号供电宿舍东楼二单元210室' },
+    { id: 's35', name: '俞麟轩', gender: '男', studentId: '35', birthday: '2018-08-24', parent: '孙翔', phone: '13858978567', address: '浙江省东阳市吴宁街道金科花园6-4-402' },
+    { id: 's36', name: '张璟萱', gender: '女', studentId: '36', birthday: '2018-05-16', parent: '张彩霞', phone: '15267143722', address: '浙江省东阳市江北街道茗田花园10栋402' },
+    { id: 's37', name: '赵沐洋', gender: '男', studentId: '37', birthday: '2018-04-17', parent: '王亚君', phone: '13758965927', address: '浙江省东阳市吴宁街道陈宅街7号1幢2单元' },
+    { id: 's38', name: '郑佳和', gender: '女', studentId: '38', birthday: '2018-05-28', parent: '章成玲', phone: '13566794148', address: '浙江省东阳市吴宁街道荷塘社区四联' },
+    { id: 's39', name: '周炳乔', gender: '女', studentId: '39', birthday: '2018-01-23', parent: '崔世清', phone: '18292169606', address: '浙江省东阳市冯高楼小区' },
+    { id: 's40', name: '周炳铮', gender: '男', studentId: '40', birthday: '2018-01-23', parent: '崔世清', phone: '18292169606', address: '浙江省东阳市冯高楼小区' },
+    { id: 's41', name: '江舒晗', gender: '女', studentId: '41', birthday: '2017-10-11', parent: '卢婧婧', phone: '15700064731', address: '浙江省东阳市吴宁街道荷塘社区四联179号' },
+    { id: 's42', name: '陈宇轩', gender: '男', studentId: '42', birthday: '2018-01-18', parent: '许青萍', phone: '13396721969', address: '浙江省东阳市吴宁街道荷塘社区一都许640号' }
+  ];
+  rawStudents.forEach(stu => { state.students.push({ id: stu.id, name: stu.name, gender: stu.gender, studentId: stu.studentId, birthday: stu.birthday, parent: stu.parent, phone: stu.phone, address: stu.address, notes: [] }); });
+  save();
+}
+
+load();
+initRealData();
+renderAll();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
