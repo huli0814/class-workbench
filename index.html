@@ -1,49 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-CN">  
-<head>  
-<meta charset="UTF-8">  
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>三（3）班班主任工作台</title>
-<link rel="icon" type="image/png" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{  
-  --bg:#eef1f6;  
-  --card:#fff;  
-  --border:#e8ecf3;  
-  --text:#2b3445;  
-  --text-2:#7a8699;  
-  --text-3:#a8b2c1;  
-  --primary:#ef8a8a;  
-  --primary-soft:#fdeaea;  
-  --mint:#7fc9b4;--mint-soft:#e5f6f1;
-  --mustard:#e8b95e;--mustard-soft:#fdf4e0;
-  --pink:#e89ab8;--pink-soft:#fcebf1;
-  --blue:#7fb0dd;--blue-soft:#e8f1fa;
-  --lav:#ab9ad8;--lav-soft:#f0ecfa;
-  --shadow-sm:0 2px 6px rgba(90,110,140,.05);
-  --shadow:0 4px 16px rgba(90,110,140,.08);
-  --radius:16px;  
-  --radius-sm:10px;  
-}
-body{  
-  font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
-  color:var(--text);  
-  background-color:var(--bg);  
-  background-image:
-    radial-gradient(at 8% 0%, rgba(239,138,138,.09) 0px, transparent 45%),
-    radial-gradient(at 95% 8%, rgba(127,176,221,.10) 0px, transparent 45%),
-    radial-gradient(at 20% 95%, rgba(127,201,180,.08) 0px, transparent 45%);
-  background-attachment:fixed;
-  font-size:14px;
-  line-height:1.6;
-}
+:root{--bg:#eef1f6;--card:#fff;--border:#e8ecf3;--text:#2b3445;--text-2:#7a8699;--text-3:#a8b2c1;--primary:#ef8a8a;--primary-soft:#fdeaea;--mint:#7fc9b4;--mint-soft:#e5f6f1;--mustard:#e8b95e;--mustard-soft:#fdf4e0;--pink:#e89ab8;--pink-soft:#fcebf1;--blue:#7fb0dd;--blue-soft:#e8f1fa;--lav:#ab9ad8;--lav-soft:#f0ecfa;--shadow-sm:0 2px 6px rgba(90,110,140,.05);--shadow:0 4px 16px rgba(90,110,140,.08);--radius:16px;--radius-sm:10px;}
+body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:var(--text);background-color:var(--bg);background-image:radial-gradient(at 8% 0%, rgba(239,138,138,.09) 0px, transparent 45%),radial-gradient(at 95% 8%, rgba(127,176,221,.10) 0px, transparent 45%),radial-gradient(at 20% 95%, rgba(127,201,180,.08) 0px, transparent 45%);background-attachment:fixed;font-size:14px;line-height:1.6;}
 .app{display:flex;min-height:100vh}
 .sidebar{width:212px;flex-shrink:0;background:rgba(255,255,255,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-right:1px solid var(--border);padding:16px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;border-bottom:1px solid var(--border);margin-bottom:12px}
@@ -85,13 +55,7 @@ tbody tr:hover td{background:#fafcff}
 .empty{text-align:center;padding:32px 12px;color:var(--text-3);font-size:13.5px}
 .muted{color:var(--text-3)}
 .tag{padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:500;display:inline-block;white-space:nowrap}
-.tag-blue{background:var(--blue-soft);color:#4a7fb0}
-.tag-mint{background:var(--mint-soft);color:#3d9a82}
-.tag-mustard{background:var(--mustard-soft);color:#b08b2e}
-.tag-pink{background:var(--pink-soft);color:#c76e93}
-.tag-lav{background:var(--lav-soft);color:#7d6bb5}
-.tag-gray{background:#f0f3f8;color:var(--text-2)}
-.tag-red{background:#fdeaea;color:#d9534f}
+.tag-blue{background:var(--blue-soft);color:#4a7fb0}.tag-mint{background:var(--mint-soft);color:#3d9a82}.tag-mustard{background:var(--mustard-soft);color:#b08b2e}.tag-pink{background:var(--pink-soft);color:#c76e93}.tag-lav{background:var(--lav-soft);color:#7d6bb5}.tag-gray{background:#f0f3f8;color:var(--text-2)}.tag-red{background:#fdeaea;color:#d9534f}
 .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;background:#f4f7fb;color:var(--text-2)}
 .greet-card{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(115deg,#fff 0%,#fff9f9 60%,#fdf1f5 100%);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow-sm);margin-bottom:14px;flex-wrap:wrap;gap:12px}
 .greet-hi{font-size:21px;font-weight:700;color:#1f2733;margin-bottom:3px}
@@ -187,22 +151,8 @@ tbody tr:hover td{background:#fafcff}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-16px);background:#fff;color:var(--text);padding:11px 22px;border-radius:999px;font-size:13.5px;z-index:999;opacity:0;transition:.3s;pointer-events:none;box-shadow:0 8px 24px rgba(80,100,130,.15);border:1px solid var(--border);font-weight:500}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
-@media(max-width:900px){
-  .stat-grid{grid-template-columns:1fr 1fr}
-  .home-lists{grid-template-columns:1fr}
-  .qm-modules{grid-template-columns:1fr}
-}
-@media(max-width:700px){
-  .app{flex-direction:column}
-  .sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}
-  .brand{display:none}
-  .sidebar nav{flex-direction:row;gap:6px}
-  .sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}
-  .content{padding:14px}
-  .stat-grid{grid-template-columns:1fr 1fr;gap:10px}
-  .greet-hi{font-size:18px}
-  .holiday-board{flex-direction:column;align-items:flex-start;gap:12px}
-}
+@media(max-width:900px){.stat-grid{grid-template-columns:1fr 1fr}.home-lists{grid-template-columns:1fr}.qm-modules{grid-template-columns:1fr}}
+@media(max-width:700px){.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}.brand{display:none}.sidebar nav{flex-direction:row;gap:6px}.sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}.content{padding:14px}.stat-grid{grid-template-columns:1fr 1fr;gap:10px}.greet-hi{font-size:18px}.holiday-board{flex-direction:column;align-items:flex-start;gap:12px}}
 </style>
 </head>
 <body>
@@ -231,7 +181,7 @@ tbody tr:hover td{background:#fafcff}
 
   <div class="main">
     <div class="content">
-
+      <!-- 首页 -->
       <div class="page active" id="page-home">
         <div class="greet-card">
           <div style="flex:1">
@@ -244,36 +194,8 @@ tbody tr:hover td{background:#fafcff}
         <div class="quick-card">
           <input id="quick-input" placeholder="✍️ 一句话速记：如「今天数学测验张明95分，表扬了他」，按回车智能识别 ✨">
         </div>
-        <div class="stat-grid">
-          <div class="stat-card" onclick="go('students')">
-            <div class="stat-icon" style="background:var(--blue-soft);color:#4a7fb0">👥</div>
-            <div class="stat-num" id="stat-students">0</div>
-            <div class="stat-label">班级学生数</div>
-            <div class="stat-more">›</div>
-          </div>
-          <div class="stat-card" onclick="editCourse()">
-            <div class="stat-icon" style="background:var(--mint-soft);color:#3d9a82">📚</div>
-            <div class="stat-num" id="stat-course" style="font-size:15px;line-height:1.4;margin-top:4px">—</div>
-            <div class="stat-label">今日课程（点击编辑）</div>
-            <div class="stat-more">›</div>
-          </div>
-          <div class="stat-card" onclick="go('todo')">
-            <div class="stat-icon" style="background:var(--mustard-soft);color:#b08b2e">✅</div>
-            <div class="stat-num" id="stat-todo">0</div>
-            <div class="stat-label">未完成待办</div>
-            <div class="stat-more">›</div>
-          </div>
-          <div class="stat-card" onclick="go('comm')">
-            <div class="stat-icon" style="background:var(--pink-soft);color:#c76e93">💬</div>
-            <div class="stat-num" id="stat-comm">0</div>
-            <div class="stat-label">待跟进沟通</div>
-            <div class="stat-more">›</div>
-          </div>
-        </div>
-        <div class="holiday-board">
-          <div class="holiday-hero" id="holiday-hero"></div>
-          <div class="holiday-list" id="holiday-list"></div>
-        </div>
+
+        <!-- 4个常用列表 (移到上面了) -->
         <div class="home-lists">
           <div class="home-list-card">
             <div class="hl-head"><div class="hl-title"><span class="dot" style="background:var(--mustard)"></span>待办事项</div><button class="hl-link" onclick="go('todo')">全部 ›</button></div>
@@ -292,8 +214,44 @@ tbody tr:hover td{background:#fafcff}
             <div id="home-reflection"></div>
           </div>
         </div>
+
+        <!-- 节假日看板 (移到4个常用列表下面了) -->
+        <div class="holiday-board">
+          <div class="holiday-hero" id="holiday-hero"></div>
+          <div class="holiday-list" id="holiday-list"></div>
+        </div>
+
+        <!-- 4个统计卡片 (保持在最下面) -->
+        <div class="stat-grid">
+          <div class="stat-card" onclick="go('students')">
+            <div class="stat-icon" style="background:var(--blue-soft);color:#4a7fb0">👥</div>
+            <div class="stat-num" id="stat-students">0</div>
+            <div class="stat-label">班级学生数</div>
+            <div class="stat-more">›</div>
+          </div>
+          <div class="stat-card" style="cursor:default;">
+            <div class="stat-icon" style="background:var(--lav-soft);color:#7d6bb5">📦</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+              <button class="btn btn-primary btn-sm" onclick="exportBackup()" style="width:100%;justify-content:center;padding:6px 0;">📤 导出备份</button>
+              <label class="btn btn-gray btn-sm" style="cursor:pointer;margin:0;justify-content:center;width:100%;padding:6px 0;">📥 导入备份<input type="file" accept=".json" style="display:none" onchange="importBackup(event)"></label>
+            </div>
+          </div>
+          <div class="stat-card" onclick="go('todo')">
+            <div class="stat-icon" style="background:var(--mustard-soft);color:#b08b2e">✅</div>
+            <div class="stat-num" id="stat-todo">0</div>
+            <div class="stat-label">未完成待办</div>
+            <div class="stat-more">›</div>
+          </div>
+          <div class="stat-card" onclick="go('comm')">
+            <div class="stat-icon" style="background:var(--pink-soft);color:#c76e93">💬</div>
+            <div class="stat-num" id="stat-comm">0</div>
+            <div class="stat-label">待跟进沟通</div>
+            <div class="stat-more">›</div>
+          </div>
+        </div>
       </div>
 
+      <!-- 学生档案 -->
       <div class="page" id="page-students">
         <h2 class="page-title">👥 学生档案</h2>
         <div class="card">
@@ -313,6 +271,7 @@ tbody tr:hover td{background:#fafcff}
         </div>
       </div>
 
+      <!-- 班级日志 -->
       <div class="page" id="page-log">
         <h2 class="page-title">📅 班级日志</h2>
         <div class="card">
@@ -329,6 +288,7 @@ tbody tr:hover td{background:#fafcff}
         </div>
       </div>
 
+      <!-- 待办事项 -->
       <div class="page" id="page-todo">
         <h2 class="page-title">✅ 待办事项</h2>
         <div class="card">
@@ -342,15 +302,14 @@ tbody tr:hover td{background:#fafcff}
         <div class="card" style="padding:8px 18px"><div id="todo-list"></div></div>
       </div>
 
+      <!-- 成绩分析 -->
       <div class="page" id="page-score">
         <h2 class="page-title">📈 成绩分析</h2>
         <div class="card">
           <div style="font-size:13.5px;font-weight:600;margin-bottom:10px;color:#1f2733">📷 拍照 / 手动录入成绩</div>
           <div class="form-row">
             <select id="score-student" style="flex:1"></select>
-            <select id="score-subject" style="flex:0 0 90px">
-              <option>语文</option><option>数学</option><option>英语</option><option>科学</option>
-            </select>
+            <select id="score-subject" style="flex:0 0 90px"><option>语文</option><option>数学</option><option>英语</option><option>科学</option></select>
             <input id="score-exam" placeholder="考试名称，如：第二单元" style="flex:1.3">
             <input id="score-num" type="number" placeholder="分数" style="flex:0 0 80px">
             <input id="score-total" type="number" placeholder="满分" value="100" style="flex:0 0 80px">
@@ -365,10 +324,7 @@ tbody tr:hover td{background:#fafcff}
         <div class="card">
           <div class="form-row" style="margin-bottom:14px">
             <select id="curve-student" style="flex:1" onchange="renderScoreCurve()"></select>
-            <select id="curve-subject" style="flex:0 0 110px" onchange="renderScoreCurve()">
-              <option value="">全部科目</option>
-              <option>语文</option><option>数学</option><option>英语</option><option>科学</option>
-            </select>
+            <select id="curve-subject" style="flex:0 0 110px" onchange="renderScoreCurve()"><option value="">全部科目</option><option>语文</option><option>数学</option><option>英语</option><option>科学</option></select>
             <span class="muted" style="font-size:12.5px;flex:2">📊 成绩趋势曲线（至少 2 次记录）</span>
           </div>
           <div id="curve-chart"></div>
@@ -379,6 +335,7 @@ tbody tr:hover td{background:#fafcff}
         </div>
       </div>
 
+      <!-- 错题汇总 -->
       <div class="page" id="page-wrong">
         <h2 class="page-title">📝 错题汇总</h2>
         <div class="card">
@@ -398,6 +355,7 @@ tbody tr:hover td{background:#fafcff}
         </div>
       </div>
 
+      <!-- 课堂反思 -->
       <div class="page" id="page-reflection">
         <h2 class="page-title">💡 课堂记录与反思</h2>
         <div class="card">
@@ -412,6 +370,7 @@ tbody tr:hover td{background:#fafcff}
         <div class="card"><div id="ref-list"></div></div>
       </div>
 
+      <!-- 家校沟通 -->
       <div class="page" id="page-comm">
         <h2 class="page-title">💬 家校沟通</h2>
         <div class="card">
@@ -436,6 +395,7 @@ tbody tr:hover td{background:#fafcff}
         </div>
       </div>
 
+      <!-- 班级相册 -->
       <div class="page" id="page-photo">
         <h2 class="page-title">📷 班级相册</h2>
         <div class="card">
@@ -449,6 +409,7 @@ tbody tr:hover td{background:#fafcff}
         <div class="card"><div class="photo-grid" id="photo-grid"></div></div>
       </div>
 
+      <!-- 数据导出 -->
       <div class="page" id="page-export">
         <h2 class="page-title">📤 数据导出</h2>
         <div class="card">
@@ -478,11 +439,11 @@ tbody tr:hover td{background:#fafcff}
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
+<!-- 速记识别模态框 -->
 <div class="modal-bg" id="quick-modal">
   <div class="modal">
     <h3>✨ 智能识别 · 确认归档</h3>
@@ -498,6 +459,7 @@ tbody tr:hover td{background:#fafcff}
   </div>
 </div>
 
+<!-- 学生档案模态框 -->
 <div class="modal-bg" id="stu-modal-bg">
   <div class="modal" style="max-width:640px">
     <h3 id="stu-modal-title"></h3>
@@ -623,14 +585,9 @@ function renderHome() {
   const dayOfYear = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
   document.getElementById('greet-quote').textContent = GREETINGS[dayOfYear % GREETINGS.length];
   document.getElementById('stat-students').textContent = state.students.length;
-  document.getElementById('stat-course').textContent = state.settings.todayCourse || '点击设置';
   document.getElementById('stat-todo').textContent = state.todos.filter(t => !t.done).length;
   document.getElementById('stat-comm').textContent = state.comms.filter(c => c.status === 'pending').length;
   renderHolidays(); renderHomeTodo(); renderHomeLog(); renderHomeComm(); renderHomeReflection();
-}
-function editCourse() {
-  const v = prompt('请输入今天的课程（用顿号分隔）', state.settings.todayCourse || '');
-  if (v !== null) { state.settings.todayCourse = v.trim(); save(); renderHome(); }
 }
 function renderHolidays() {
   const now = new Date(); now.setHours(0,0,0,0);
