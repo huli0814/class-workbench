@@ -191,11 +191,14 @@ tbody tr:hover td{background:#fafcff}
           </div>
           <div class="greet-avatar">🌸</div>
         </div>
-        <div class="quick-card">
-          <input id="quick-input" placeholder="✍️ 一句话速记：如「今天数学测验张明95分，表扬了他」，按回车智能识别 ✨">
+        <div class="quick-card" style="display:flex;align-items:center;gap:8px;">
+          <input id="quick-input" placeholder="✍️ 一句话速记，或点击右侧让 AI 智能解析 ✨" style="flex:1;">
+          <button class="btn btn-primary btn-sm" onclick="openQuickModal()" style="white-space:nowrap;">⚡ 本地快记</button>
+          <button class="btn btn-mint btn-sm" onclick="aiQuickParse()" style="white-space:nowrap;">🤖 AI 智能解析</button>
+          <button class="btn btn-gray btn-sm" onclick="openAiConfig()" style="white-space:nowrap;">⚙️</button>
         </div>
 
-        <!-- 4个常用列表 (移到上面了) -->
+        <!-- 4个常用列表 -->
         <div class="home-lists">
           <div class="home-list-card">
             <div class="hl-head"><div class="hl-title"><span class="dot" style="background:var(--mustard)"></span>待办事项</div><button class="hl-link" onclick="go('todo')">全部 ›</button></div>
@@ -215,13 +218,13 @@ tbody tr:hover td{background:#fafcff}
           </div>
         </div>
 
-        <!-- 节假日看板 (移到4个常用列表下面了) -->
+        <!-- 节假日看板 -->
         <div class="holiday-board">
           <div class="holiday-hero" id="holiday-hero"></div>
           <div class="holiday-list" id="holiday-list"></div>
         </div>
 
-        <!-- 4个统计卡片 (保持在最下面) -->
+        <!-- 4个统计卡片 -->
         <div class="stat-grid">
           <div class="stat-card" onclick="go('students')">
             <div class="stat-icon" style="background:var(--blue-soft);color:#4a7fb0">👥</div>
@@ -329,6 +332,18 @@ tbody tr:hover td{background:#fafcff}
           </div>
           <div id="curve-chart"></div>
         </div>
+
+        <!-- 成绩对比模块 -->
+        <div class="card">
+          <h3 style="font-size:15px;margin-bottom:12px">📊 成绩对比与进步统计</h3>
+          <div class="form-row" style="margin-bottom:14px">
+            <select id="compare-exam-1" style="flex:1" onchange="renderScoreComparison()"></select>
+            <span style="color:var(--text-3);font-size:12px;font-weight:600;flex:0 0 auto;">对比</span>
+            <select id="compare-exam-2" style="flex:1" onchange="renderScoreComparison()"></select>
+          </div>
+          <div id="compare-result" class="empty">请选择两次考试进行对比</div>
+        </div>
+
         <div class="card" style="padding:8px 18px">
           <table><thead><tr><th>日期</th><th>学生</th><th>科目</th><th>考试</th><th>成绩</th><th style="text-align:right">操作</th></tr></thead>
           <tbody id="score-tbody"></tbody></table>
@@ -459,6 +474,21 @@ tbody tr:hover td{background:#fafcff}
   </div>
 </div>
 
+<!-- AI配置模态框 -->
+<div class="modal-bg" id="ai-config-modal">
+  <div class="modal">
+    <h3>⚙️ 配置 AI 智能解析</h3>
+    <div class="sub">填写您的 API Key，密钥仅保存在本设备浏览器中，不会上传到服务器。</div>
+    <div class="qm-row"><span class="lbl">API Key</span><input type="password" id="ai-api-key" placeholder="sk-..."></div>
+    <div class="qm-row"><span class="lbl">API 地址</span><input type="text" id="ai-api-url" value="https://api.deepseek.com/v1/chat/completions" placeholder="https://api.deepseek.com/v1/chat/completions"></div>
+    <div style="font-size:12px;color:var(--text-3);margin-top:8px;">💡 推荐使用 DeepSeek-V4.1-Flash，使用本机浏览器存储，安心使用。</div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeAiConfig()">取消</button>
+      <button class="btn btn-primary" onclick="saveAiConfig()">保存配置</button>
+    </div>
+  </div>
+</div>
+
 <!-- 学生档案模态框 -->
 <div class="modal-bg" id="stu-modal-bg">
   <div class="modal" style="max-width:640px">
@@ -507,7 +537,7 @@ const GREETINGS = [
 ];
 
 let state = {
-  settings: { teacherName: '黄老师', className: '三（3）班', todayCourse: '' },
+  settings: { teacherName: '黄老师', className: '三（3）班', todayCourse: '', aiApiKey: '', aiApiUrl: 'https://api.deepseek.com/v1/chat/completions' },
   students: [], logs: [], todos: [], scores: [], wrongs: [], reflections: [], comms: [], photos: []
 };
 
@@ -523,6 +553,8 @@ function load() {
     if (!Array.isArray(state[k])) state[k] = [];
   });
   if (!state.settings) state.settings = { teacherName: '黄老师', className: '三（3）班', todayCourse: '' };
+  if (!state.settings.aiApiKey) state.settings.aiApiKey = '';
+  if (!state.settings.aiApiUrl) state.settings.aiApiUrl = 'https://api.deepseek.com/v1/chat/completions';
 }
 function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
 function uid(p) { return p + Date.now() + Math.random().toString(36).slice(2, 6); }
@@ -549,7 +581,7 @@ function go(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + tab));
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (tab === 'home') renderHome();
-  if (tab === 'score') { renderScoreOptions(); renderScoreCurve(); }
+  if (tab === 'score') { renderScoreOptions(); renderScoreCurve(); renderScoreComparisonOptions(); }
   if (tab === 'export') renderExportOverview();
 }
 document.querySelectorAll('.sidebar button').forEach(btn => {
@@ -558,7 +590,7 @@ document.querySelectorAll('.sidebar button').forEach(btn => {
 
 function renderAll() {
   renderHome(); renderStudents(); renderCalendar(); renderLogList();
-  renderTodo(); renderScoreOptions(); renderScores(); renderScoreCurve();
+  renderTodo(); renderScoreOptions(); renderScores(); renderScoreCurve(); renderScoreComparisonOptions();
   refreshStudentSelects(); renderWrong(); renderReflections(); renderComm(); renderPhotos(); renderExportOverview();
 }
 
@@ -717,9 +749,9 @@ function addScore() {
   const date = todayStr(); state.scores.push({ id: uid('sc'), date, studentId: sid, studentName: stu.name, subject, exam, score, total });
   addStudentNote(sid, '成绩记录', `${subject} ${exam}：${score}/${total}`);
   document.getElementById('score-num').value = ''; document.getElementById('score-exam').value = '';
-  save(); renderScores(); renderScoreCurve(); renderStudents(); renderHome(); toast('已录入成绩 ✓');
+  save(); renderScores(); renderScoreCurve(); renderScoreComparisonOptions(); renderStudents(); renderHome(); toast('已录入成绩 ✓');
 }
-function delScore(id) { state.scores = state.scores.filter(s => s.id !== id); save(); renderScores(); renderScoreCurve(); renderStudents(); }
+function delScore(id) { state.scores = state.scores.filter(s => s.id !== id); save(); renderScores(); renderScoreCurve(); renderScoreComparisonOptions(); renderStudents(); }
 function renderScores() {
   const tbody = document.getElementById('score-tbody'); const list = state.scores.slice().reverse();
   if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无成绩记录</td></tr>'; return; }
@@ -737,6 +769,63 @@ function renderScoreCurve() {
   const area = path + ` L${pts[n-1].x.toFixed(1)},${PT+chartH} L${pts[0].x.toFixed(1)},${PT+chartH} Z`;
   const gridLines = [0, 25, 50, 75, 100].map(pct => { const y = PT + chartH - (pct / 100) * chartH; return `<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#eef1f6" stroke-width="1"/><text x="${PL-8}" y="${y+4}" text-anchor="end" font-size="11" fill="#a8b2c1">${pct}</text>`; }).join('');
   box.innerHTML = `<div class="curve-wrap"><svg class="curve-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef8a8a" stop-opacity=".28"/><stop offset="100%" stop-color="#ef8a8a" stop-opacity="0"/></linearGradient></defs>${gridLines}<path d="${area}" fill="url(#curveGrad)"/><path d="${path}" fill="none" stroke="#ef8a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="5" fill="#fff" stroke="#ef8a8a" stroke-width="2.5"/><text x="${p.x}" y="${p.y-12}" text-anchor="middle" font-size="12" font-weight="600" fill="#ef8a8a">${p.s.score}</text><text x="${p.x}" y="${H-PB+22}" text-anchor="middle" font-size="10.5" fill="#a8b2c1">${p.s.date.slice(5)}</text>`).join('')}</svg><div class="curve-legend">${[...new Set(list.map(s => s.subject))].map((s, i) => { const colors = ['#ef8a8a','#7fb0dd','#7fc9b4','#e8b95e']; return `<span><span class="dot" style="background:${colors[i%4]}"></span>${s}</span>`; }).join('')}</div></div>`;
+}
+
+function renderScoreComparisonOptions() {
+  const exams = [...new Set(state.scores.map(s => s.exam))];
+  ['compare-exam-1', 'compare-exam-2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">选择考试</option>' + exams.map(e => `<option value="${e}">${e}</option>`).join('');
+    if (cur) el.value = cur;
+  });
+}
+
+function renderScoreComparison() {
+  const exam1 = document.getElementById('compare-exam-1').value;
+  const exam2 = document.getElementById('compare-exam-2').value;
+  const box = document.getElementById('compare-result');
+  if (!exam1 || !exam2) { box.innerHTML = '<div class="empty" style="padding:10px">请选择两次考试进行对比</div>'; return; }
+  if (exam1 === exam2) { box.innerHTML = '<div class="empty" style="padding:10px">两次考试不能相同哦</div>'; return; }
+
+  const scores1 = state.scores.filter(s => s.exam === exam1);
+  const scores2 = state.scores.filter(s => s.exam === exam2);
+  const map1 = {}; scores1.forEach(s => { if(!map1[s.studentId]) map1[s.studentId] = { total: 0, count: 0, name: s.studentName }; map1[s.studentId].total += (s.score / s.total * 100); map1[s.studentId].count++; });
+  const map2 = {}; scores2.forEach(s => { if(!map2[s.studentId]) map2[s.studentId] = { total: 0, count: 0, name: s.studentName }; map2[s.studentId].total += (s.score / s.total * 100); map2[s.studentId].count++; });
+
+  let sum1 = 0, count1 = 0; let sum2 = 0, count2 = 0;
+  const compareList = [];
+  Object.keys(map1).forEach(sid => {
+    if (map2[sid]) {
+      const avg1 = map1[sid].total / map1[sid].count;
+      const avg2 = map2[sid].total / map2[sid].count;
+      sum1 += avg1; count1++;
+      sum2 += avg2; count2++;
+      compareList.push({ name: map1[sid].name, avg1: avg1.toFixed(1), avg2: avg2.toFixed(1), diff: (avg2 - avg1).toFixed(1) });
+    }
+  });
+
+  if (!compareList.length) { box.innerHTML = '<div class="empty" style="padding:10px">这两次考试没有重合的学生记录</div>'; return; }
+
+  compareList.sort((a, b) => parseFloat(b.diff) - parseFloat(a.diff));
+  const overallDiff = (sum2/count2 - sum1/count1).toFixed(1);
+  const overallCls = overallDiff > 0 ? 'tag-mint' : overallDiff < 0 ? 'tag-red' : 'tag-gray';
+  const overallTxt = overallDiff > 0 ? `进步 +${overallDiff}` : overallDiff < 0 ? `退步 ${overallDiff}` : '持平';
+
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;background:#fafbfd;padding:10px 14px;border-radius:10px;">
+    <div style="font-size:13px;color:var(--text-2)">全班平均分：<b>${(sum1/count1).toFixed(1)}</b> → <b>${(sum2/count2).toFixed(1)}</b></div>
+    <span class="tag ${overallCls}">${overallTxt}</span>
+  </div>`;
+
+  html += '<table><thead><tr><th>学生</th><th>上次</th><th>本次</th><th>分差</th><th>趋势</th></tr></thead><tbody>';
+  html += compareList.map(c => {
+    const d = parseFloat(c.diff);
+    const tag = d > 0 ? `<span class="tag tag-mint">+${d}</span>` : d < 0 ? `<span class="tag tag-red">${d}</span>` : `<span class="tag tag-gray">0</span>`;
+    return `<tr><td>${esc(c.name)}</td><td>${c.avg1}</td><td>${c.avg2}</td><td style="font-weight:600;color:${d>0?'#3d9a82':d<0?'#d9534f':'var(--text-2)'}">${d>0?'+':''}${d}</td><td>${tag}</td></tr>`;
+  }).join('');
+  html += '</tbody></table>';
+  box.innerHTML = html;
 }
 
 function addWrong() {
@@ -804,13 +893,107 @@ const MODULES = [
 const COLOR_MAP = { blue: { bg: 'var(--blue-soft)', fg: '#4a7fb0' }, pink: { bg: 'var(--pink-soft)', fg: '#c76e93' }, mint: { bg: 'var(--mint-soft)', fg: '#3d9a82' }, mustard: { bg: 'var(--mustard-soft)', fg: '#b08b2e' }, lav: { bg: 'var(--lav-soft)', fg: '#7d6bb5' } };
 const KEYWORDS = { comm: ['家长','妈妈','爸爸','电话','微信','沟通','联系','反映','反馈','交流','家访','面谈','约谈','来访','短信','私信'], todo: ['明天','后天','记得','提醒','待办','需要','准备','收集','上交','截止','安排','通知'], wrong: ['错题','做错','不会','写错','算错','答错','错在','这道题','这道','做不来'], reflection: ['课堂','上课','教学','反思','今天讲','这节课','导入','环节','板书','提问'], score: ['成绩','分数','测验','考试','听写','默写','测评','考了','考得','得分','满分','及格'] };
 function detectSubject(text) { for (const s of ['语文','数学','英语','科学']) if (text.includes(s)) return s; return '未填'; }
-function analyzeText(text) {
-  const students = state.students.filter(s => text.includes(s.name)).map(s => s.id); const mods = [];
-  if (students.length) mods.push('student'); mods.push('log');
-  if (KEYWORDS.comm.some(w => text.includes(w))) mods.push('comm'); if (KEYWORDS.todo.some(w => text.includes(w))) mods.push('todo');
-  if (KEYWORDS.wrong.some(w => text.includes(w))) mods.push('wrong'); if (KEYWORDS.reflection.some(w => text.includes(w))) mods.push('reflection');
-  return { students, modules: [...new Set(mods)] };
+
+// ==========================================
+// AI 智能解析逻辑
+// ==========================================
+function openAiConfig() {
+  document.getElementById('ai-api-key').value = state.settings.aiApiKey || '';
+  document.getElementById('ai-api-url').value = state.settings.aiApiUrl || 'https://api.deepseek.com/v1/chat/completions';
+  document.getElementById('ai-config-modal').classList.add('show');
 }
+function closeAiConfig() { document.getElementById('ai-config-modal').classList.remove('show'); }
+function saveAiConfig() {
+  state.settings.aiApiKey = document.getElementById('ai-api-key').value.trim();
+  state.settings.aiApiUrl = document.getElementById('ai-api-url').value.trim() || 'https://api.deepseek.com/v1/chat/completions';
+  save();
+  closeAiConfig();
+  toast('AI 配置已保存 ✓');
+}
+
+async function aiQuickParse() {
+  const text = document.getElementById('quick-input').value.trim();
+  if (!text) return toast('请先输入内容');
+  if (!state.settings.aiApiKey) {
+    openAiConfig();
+    return toast('请先配置 AI API Key');
+  }
+  
+  const btn = event.target;
+  const originalText = btn.textContent;
+  btn.textContent = '⏳ 解析中...';
+  btn.disabled = true;
+
+  // 构造提示词
+  const studentList = state.students.map(s => s.name).join('、');
+  const prompt = `你是一个小学班主任的AI助手。请分析以下班主任输入的内容，提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期（今天写今天，明天写明天，没写日期默认今天）。请严格以JSON格式返回，不要包含任何Markdown标记。字段：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"适合记录的精炼文本"}。
+  
+已知班级学生名单：${studentList}
+输入内容：${text}`;
+
+  try {
+    const response = await fetch(state.settings.aiApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.settings.aiApiKey}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.1
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `API 请求失败 (${response.status})`);
+    }
+
+    const data = await response.json();
+    const aiReply = data.choices[0].message.content.trim();
+    
+    // 清理可能的 markdown 代码块标记
+    const jsonStr = aiReply.replace(/```json/g, '').replace(/```/g, '').trim();
+    const result = JSON.parse(jsonStr);
+
+    // 映射模块 key
+    const moduleKeyMap = {
+      '学生档案': 'student', '班级日志': 'log', '家校沟通': 'comm',
+      '待办事项': 'todo', '错题汇总': 'wrong', '课堂反思': 'reflection'
+    };
+    const mappedModules = (result.modules || []).map(m => moduleKeyMap[m]).filter(Boolean);
+    
+    // 查找学生 ID
+    const studentIds = (result.students || []).map(name => {
+      const stu = state.students.find(s => s.name === name);
+      return stu ? stu.id : null;
+    }).filter(Boolean);
+
+    // 构造 qmState 并打开弹窗
+    qmState = {
+      text: result.content || text,
+      date: result.date || todayStr(),
+      students: studentIds,
+      modules: mappedModules.length ? mappedModules : ['log']
+    };
+    
+    renderQuickModal();
+    document.getElementById('quick-modal').classList.add('show');
+    toast('AI 解析成功，请确认 ✓');
+
+  } catch (err) {
+    console.error(err);
+    toast('AI 解析失败：' + err.message);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+// ==========================================
+// 本地速记逻辑
+// ==========================================
 let qmState = { text: '', date: '', students: [], modules: [] };
 function openQuickModal() { const text = document.getElementById('quick-input').value.trim(); if (!text) return toast('请输入内容'); const r = analyzeText(text); qmState = { text, date: todayStr(), students: r.students, modules: r.modules }; renderQuickModal(); document.getElementById('quick-modal').classList.add('show'); }
 function renderQuickModal() {
@@ -834,8 +1017,18 @@ function saveQuickAll() {
   });
   save(); document.getElementById('quick-input').value = ''; closeQuickModal(); renderAll(); toast(`已保存到 ${modules.length} 个模块 ✓`);
 }
+function analyzeText(text) {
+  const students = state.students.filter(s => text.includes(s.name)).map(s => s.id); const mods = [];
+  if (students.length) mods.push('student'); mods.push('log');
+  if (KEYWORDS.comm.some(w => text.includes(w))) mods.push('comm'); if (KEYWORDS.todo.some(w => text.includes(w))) mods.push('todo');
+  if (KEYWORDS.wrong.some(w => text.includes(w))) mods.push('wrong'); if (KEYWORDS.reflection.some(w => text.includes(w))) mods.push('reflection');
+  return { students, modules: [...new Set(mods)] };
+}
+
+// 绑定本地速记的回车事件
 document.getElementById('quick-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); openQuickModal(); } });
 
+// 导出功能
 function downloadExcel(filename, sheets) {
   if (typeof XLSX !== 'undefined') { const wb = XLSX.utils.book_new(); sheets.forEach(sh => { const rows = sh.rows.length ? sh.rows : [{ '(提示)': '暂无数据' }]; const ws = XLSX.utils.json_to_sheet(rows); XLSX.utils.book_append_sheet(wb, ws, sh.name.slice(0, 31)); }); XLSX.writeFile(wb, filename + '.xlsx'); }
   else { let csv = ''; sheets.forEach(sh => { csv += '### ' + sh.name + '\n'; if (sh.rows.length) { const keys = Object.keys(sh.rows[0]); csv += keys.join(',') + '\n'; sh.rows.forEach(r => { csv += keys.map(k => `"${String(r[k] ?? '').replace(/"/g,'""')}"`).join(',') + '\n'; }); } csv += '\n'; }); const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename + '.csv'; a.click(); }
