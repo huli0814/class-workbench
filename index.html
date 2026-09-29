@@ -942,7 +942,8 @@ async function aiQuickParse() {
   btn.disabled = true;
 
   const studentList = state.students.map(s => s.name).join('、');
-  const prompt = `你是一个小学班主任的AI助手。请分析以下班主任输入的内容。如果包含多件事情，必须拆分成多条独立记录（例如说了4件事，就返回4个对象）。提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期。请严格以JSON数组格式返回，不要包含任何Markdown标记。数组里每个对象的格式为：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"精炼后的记录文本"}。
+    const today = todayStr();
+  const prompt = `你是一个小学班主任的AI助手。今天的日期是 ${today}。请分析以下班主任输入的内容。如果包含多件事情，必须拆分成多条独立记录（例如说了4件事，就返回4个对象）。提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期（如果是“明天”，请基于今天的日期推算具体日期）。请严格以JSON数组格式返回，不要包含任何Markdown标记。数组里每个对象的格式为：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"精炼后的记录文本"}。
 已知班级学生名单：${studentList}
 输入内容：${text}`;
 
@@ -1016,31 +1017,41 @@ function closeQuickModal() {
 }
 
 function saveQuickAll() {
-  if (!qmStateList.length) return;
-  const time = nowTime();
-  let savedCount = 0;
+  if (!qmStateList.length) return toast('没有可保存的数据');
+  try {
+    const time = nowTime();
+    let savedCount = 0;
 
-  qmStateList.forEach(item => {
-    const { text, date, students, modules } = item;
-    const subject = detectSubject(text);
-    modules.forEach(m => {
-      if (m === 'student') { students.forEach(sid => addStudentNote(sid, '综合记录', text, date)); }
-      else if (m === 'log') { state.logs.push({ id: uid('l'), date, time, category: '班级事务', content: text, students: students.slice() }); }
-      else if (m === 'comm') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date, studentId: sid, studentName: stu.name, type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date, studentId: '', studentName: '（未指定）', type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); } }
-      else if (m === 'todo') { state.todos.push({ id: uid('t'), content: text, done: false, priority: '普通', dueDate: date, createdAt: todayStr() }); }
-      else if (m === 'wrong') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date, studentId: sid, studentName: stu.name, subject, content: text, mastered: false }); }); } }
-      else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date, subject, title: '', rating: 4, content: text }); }
+    qmStateList.forEach(item => {
+      let { text, date, students, modules } = item;
+      // 防呆机制：如果AI给的日期是过去很久的，或者格式不对，强制用今天
+      if (!date || date < '2026-01-01' || isNaN(new Date(date).getTime())) {
+        date = todayStr();
+      }
+      if (!modules || !modules.length) modules = ['log'];
+      const subject = detectSubject(text);
+      
+      modules.forEach(m => {
+        if (m === 'student') { students.forEach(sid => addStudentNote(sid, '综合记录', text, date)); }
+        else if (m === 'log') { state.logs.push({ id: uid('l'), date, time, category: '班级事务', content: text, students: students.slice() }); }
+        else if (m === 'comm') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date, studentId: sid, studentName: stu.name, type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date, studentId: '', studentName: '（未指定）', type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); } }
+        else if (m === 'todo') { state.todos.push({ id: uid('t'), content: text, done: false, priority: '普通', dueDate: date, createdAt: todayStr() }); }
+        else if (m === 'wrong') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date, studentId: sid, studentName: stu.name, subject, content: text, mastered: false }); }); } }
+        else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date, subject, title: '', rating: 4, content: text }); }
+      });
+      savedCount++;
     });
-    savedCount++;
-  });
 
-  save();
-  document.getElementById('quick-input').value = '';
-  closeQuickModal();
-  renderAll();
-  toast(`已成功保存 ${savedCount} 条记录 ✓`);
+    save();
+    document.getElementById('quick-input').value = '';
+    closeQuickModal();
+    renderAll();
+    toast(`已成功保存 ${savedCount} 条记录 ✓`);
+  } catch (err) {
+    console.error('保存出错:', err);
+    toast('保存失败，请重试：' + err.message);
+  }
 }
-
 // ==========================================
 // AI 专属问答逻辑
 // ==========================================
