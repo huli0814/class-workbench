@@ -151,8 +151,16 @@ tbody tr:hover td{background:#fafcff}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-16px);background:#fff;color:var(--text);padding:11px 22px;border-radius:999px;font-size:13.5px;z-index:999;opacity:0;transition:.3s;pointer-events:none;box-shadow:0 8px 24px rgba(80,100,130,.15);border:1px solid var(--border);font-weight:500}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+/* AI 聊天样式 */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 160px);background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:16px;margin-bottom:16px;}
+.chat-messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:12px;}
+.chat-bubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.6;word-wrap:break-word;}
+.chat-bubble.user{align-self:flex-end;background:var(--primary-soft);color:var(--primary);border-bottom-right-radius:2px;}
+.chat-bubble.ai{align-self:flex-start;background:#f0f3f8;color:var(--text);border-bottom-left-radius:2px;}
+.chat-input-area{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border);}
+.chat-input-area input{flex:1;}
 @media(max-width:900px){.stat-grid{grid-template-columns:1fr 1fr}.home-lists{grid-template-columns:1fr}.qm-modules{grid-template-columns:1fr}}
-@media(max-width:700px){.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}.brand{display:none}.sidebar nav{flex-direction:row;gap:6px}.sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}.content{padding:14px}.stat-grid{grid-template-columns:1fr 1fr;gap:10px}.greet-hi{font-size:18px}.holiday-board{flex-direction:column;align-items:flex-start;gap:12px}}
+@media(max-width:700px){.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}.brand{display:none}.sidebar nav{flex-direction:row;gap:6px}.sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}.content{padding:14px}.stat-grid{grid-template-columns:1fr 1fr;gap:10px}.greet-hi{font-size:18px}.holiday-board{flex-direction:column;align-items:flex-start;gap:12px}.chat-container{height:calc(100vh - 200px);}}
 </style>
 </head>
 <body>
@@ -175,6 +183,7 @@ tbody tr:hover td{background:#fafcff}
       <button data-tab="reflection">💡 课堂反思</button>
       <button data-tab="comm">💬 家校沟通</button>
       <button data-tab="photo">📷 班级相册</button>
+      <button data-tab="ai-chat">🤖 AI 智能问答</button>
       <button data-tab="export">📤 数据导出</button>
     </nav>
   </aside>
@@ -191,8 +200,9 @@ tbody tr:hover td{background:#fafcff}
           </div>
           <div class="greet-avatar">🌸</div>
         </div>
-        <div class="quick-card" style="display:flex;align-items:center;gap:8px;">
-          <input id="quick-input" placeholder="✍️ 一句话速记，或点击右侧让 AI 智能解析 ✨" style="flex:1;">
+        <div class="quick-card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <input id="quick-input" placeholder="✍️ 一句话速记，或点击 🎤 语音输入" style="flex:1;min-width:200px;">
+          <button class="btn btn-gray btn-sm" onclick="startVoiceInput()" id="voice-btn" style="white-space:nowrap;">🎤 语音输入</button>
           <button class="btn btn-primary btn-sm" onclick="openQuickModal()" style="white-space:nowrap;">⚡ 本地快记</button>
           <button class="btn btn-mint btn-sm" onclick="aiQuickParse()" style="white-space:nowrap;">🤖 AI 智能解析</button>
           <button class="btn btn-gray btn-sm" onclick="openAiConfig()" style="white-space:nowrap;">⚙️</button>
@@ -332,8 +342,6 @@ tbody tr:hover td{background:#fafcff}
           </div>
           <div id="curve-chart"></div>
         </div>
-
-        <!-- 成绩对比模块 -->
         <div class="card">
           <h3 style="font-size:15px;margin-bottom:12px">📊 成绩对比与进步统计</h3>
           <div class="form-row" style="margin-bottom:14px">
@@ -343,7 +351,6 @@ tbody tr:hover td{background:#fafcff}
           </div>
           <div id="compare-result" class="empty">请选择两次考试进行对比</div>
         </div>
-
         <div class="card" style="padding:8px 18px">
           <table><thead><tr><th>日期</th><th>学生</th><th>科目</th><th>考试</th><th>成绩</th><th style="text-align:right">操作</th></tr></thead>
           <tbody id="score-tbody"></tbody></table>
@@ -424,6 +431,23 @@ tbody tr:hover td{background:#fafcff}
         <div class="card"><div class="photo-grid" id="photo-grid"></div></div>
       </div>
 
+      <!-- AI 智能问答 -->
+      <div class="page" id="page-ai-chat">
+        <h2 class="page-title">🤖 AI 智能问答</h2>
+        <div class="card" style="padding:0;">
+          <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+              <div class="chat-bubble ai">您好，黄老师！我是您的AI助教。您可以问我关于班级的任何问题，比如：“帮我总结一下最近班级的情况”、“张明最近表现怎么样？”</div>
+            </div>
+            <div class="chat-input-area">
+              <input id="chat-input" placeholder="输入您的问题..." onkeydown="if(event.key==='Enter') sendAiChat()">
+              <button class="btn btn-primary" onclick="sendAiChat()">发送</button>
+              <button class="btn btn-gray" onclick="clearChat()" title="清空对话记录">🗑️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 数据导出 -->
       <div class="page" id="page-export">
         <h2 class="page-title">📤 数据导出</h2>
@@ -461,15 +485,12 @@ tbody tr:hover td{background:#fafcff}
 <!-- 速记识别模态框 -->
 <div class="modal-bg" id="quick-modal">
   <div class="modal">
-    <h3>✨ 智能识别 · 确认归档</h3>
-    <div class="sub">勾选要保存到的模块，一键保存（可多选）</div>
-    <div class="qm-text" id="qm-text"></div>
-    <div class="qm-row"><span class="lbl">📅 日期</span><input type="date" id="qm-date" onchange="qmState.date=this.value"></div>
-    <div class="qm-row" style="align-items:flex-start"><span class="lbl" style="padding-top:5px">👤 学生</span><div id="qm-students" style="flex:1;display:flex;gap:6px;flex-wrap:wrap"></div></div>
-    <div class="qm-modules" id="qm-modules"></div>
+    <h3>✨ AI 智能解析结果</h3>
+    <div class="sub">AI 已将内容拆分为多条记录，请确认后一键保存</div>
+    <div id="ai-results-list" style="max-height: 50vh; overflow-y: auto; margin-bottom: 16px;"></div>
     <div class="modal-actions">
       <button class="btn btn-gray" onclick="closeQuickModal()">取消</button>
-      <button class="btn btn-primary" id="qm-save-btn" onclick="saveQuickAll()">保存</button>
+      <button class="btn btn-primary" id="qm-save-btn" onclick="saveQuickAll()">一键全部保存</button>
     </div>
   </div>
 </div>
@@ -538,7 +559,7 @@ const GREETINGS = [
 
 let state = {
   settings: { teacherName: '黄老师', className: '三（3）班', todayCourse: '', aiApiKey: '', aiApiUrl: 'https://api.deepseek.com/v1/chat/completions' },
-  students: [], logs: [], todos: [], scores: [], wrongs: [], reflections: [], comms: [], photos: []
+  students: [], logs: [], todos: [], scores: [], wrongs: [], reflections: [], comms: [], photos: [], chatHistory: []
 };
 
 function load() {
@@ -549,7 +570,7 @@ function load() {
       Object.keys(p).forEach(k => { state[k] = p[k]; });
     }
   } catch (e) { console.warn(e); }
-  ['students','logs','todos','scores','wrongs','reflections','comms','photos'].forEach(k => {
+  ['students','logs','todos','scores','wrongs','reflections','comms','photos','chatHistory'].forEach(k => {
     if (!Array.isArray(state[k])) state[k] = [];
   });
   if (!state.settings) state.settings = { teacherName: '黄老师', className: '三（3）班', todayCourse: '' };
@@ -583,6 +604,7 @@ function go(tab) {
   if (tab === 'home') renderHome();
   if (tab === 'score') { renderScoreOptions(); renderScoreCurve(); renderScoreComparisonOptions(); }
   if (tab === 'export') renderExportOverview();
+  if (tab === 'ai-chat') renderChatHistory();
 }
 document.querySelectorAll('.sidebar button').forEach(btn => {
   btn.addEventListener('click', () => go(btn.dataset.tab));
@@ -882,21 +904,16 @@ function compressImage(file, maxW, quality, cb) { const reader = new FileReader(
 function delPhoto(id) { if (!confirm('删除这张照片？')) return; state.photos = state.photos.filter(p => p.id !== id); save(); renderPhotos(); }
 function renderPhotos() { const grid = document.getElementById('photo-grid'); if (!state.photos.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">还没有照片</div>'; return; } grid.innerHTML = state.photos.slice().reverse().map(p => `<div class="photo-item"><button class="del" onclick="delPhoto('${p.id}')">×</button><img src="${p.dataUrl}" alt=""><div class="info"><div style="color:var(--text-3)">${esc(p.date)}</div>${p.desc ? `<div>${esc(p.desc)}</div>` : ''}</div></div>`).join(''); }
 
-const MODULES = [
-  { key: 'student', name: '学生档案', desc: '归档到个人成长记录', icon: '👤', color: 'blue' },
-  { key: 'log', name: '班级日志', desc: '记入当天班级日志', icon: '📅', color: 'pink' },
-  { key: 'comm', name: '家校沟通', desc: '生成家校沟通记录', icon: '💬', color: 'mint' },
-  { key: 'todo', name: '待办事项', desc: '加入待办清单', icon: '✅', color: 'mustard' },
-  { key: 'wrong', name: '错题汇总', desc: '记入错题本', icon: '📝', color: 'lav' },
-  { key: 'reflection', name: '课堂反思', desc: '记入课堂记录反思', icon: '💡', color: 'pink' }
-];
-const COLOR_MAP = { blue: { bg: 'var(--blue-soft)', fg: '#4a7fb0' }, pink: { bg: 'var(--pink-soft)', fg: '#c76e93' }, mint: { bg: 'var(--mint-soft)', fg: '#3d9a82' }, mustard: { bg: 'var(--mustard-soft)', fg: '#b08b2e' }, lav: { bg: 'var(--lav-soft)', fg: '#7d6bb5' } };
-const KEYWORDS = { comm: ['家长','妈妈','爸爸','电话','微信','沟通','联系','反映','反馈','交流','家访','面谈','约谈','来访','短信','私信'], todo: ['明天','后天','记得','提醒','待办','需要','准备','收集','上交','截止','安排','通知'], wrong: ['错题','做错','不会','写错','算错','答错','错在','这道题','这道','做不来'], reflection: ['课堂','上课','教学','反思','今天讲','这节课','导入','环节','板书','提问'], score: ['成绩','分数','测验','考试','听写','默写','测评','考了','考得','得分','满分','及格'] };
-function detectSubject(text) { for (const s of ['语文','数学','英语','科学']) if (text.includes(s)) return s; return '未填'; }
+// ==========================================
+// AI 智能解析逻辑 (支持多条拆分)
+// ==========================================
+const MODULE_KEYS = {
+  '学生档案': 'student', '班级日志': 'log', '家校沟通': 'comm',
+  '待办事项': 'todo', '错题汇总': 'wrong', '课堂反思': 'reflection'
+};
 
-// ==========================================
-// AI 智能解析逻辑
-// ==========================================
+let qmStateList = []; // 存 AI 解析出的多条结果
+
 function openAiConfig() {
   document.getElementById('ai-api-key').value = state.settings.aiApiKey || '';
   document.getElementById('ai-api-url').value = state.settings.aiApiUrl || 'https://api.deepseek.com/v1/chat/completions';
@@ -924,25 +941,16 @@ async function aiQuickParse() {
   btn.textContent = '⏳ 解析中...';
   btn.disabled = true;
 
-  // 构造提示词
   const studentList = state.students.map(s => s.name).join('、');
-  const prompt = `你是一个小学班主任的AI助手。请分析以下班主任输入的内容，提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期（今天写今天，明天写明天，没写日期默认今天）。请严格以JSON格式返回，不要包含任何Markdown标记。字段：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"适合记录的精炼文本"}。
-  
+  const prompt = `你是一个小学班主任的AI助手。请分析以下班主任输入的内容。如果包含多件事情，必须拆分成多条独立记录（例如说了4件事，就返回4个对象）。提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期。请严格以JSON数组格式返回，不要包含任何Markdown标记。数组里每个对象的格式为：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"精炼后的记录文本"}。
 已知班级学生名单：${studentList}
 输入内容：${text}`;
 
   try {
     const response = await fetch(state.settings.aiApiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${state.settings.aiApiKey}`
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1
-      })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.settings.aiApiKey}` },
+      body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }], temperature: 0.1 })
     });
 
     if (!response.ok) {
@@ -952,35 +960,28 @@ async function aiQuickParse() {
 
     const data = await response.json();
     const aiReply = data.choices[0].message.content.trim();
-    
-    // 清理可能的 markdown 代码块标记
     const jsonStr = aiReply.replace(/```json/g, '').replace(/```/g, '').trim();
-    const result = JSON.parse(jsonStr);
+    const resultArray = JSON.parse(jsonStr);
 
-    // 映射模块 key
-    const moduleKeyMap = {
-      '学生档案': 'student', '班级日志': 'log', '家校沟通': 'comm',
-      '待办事项': 'todo', '错题汇总': 'wrong', '课堂反思': 'reflection'
-    };
-    const mappedModules = (result.modules || []).map(m => moduleKeyMap[m]).filter(Boolean);
-    
-    // 查找学生 ID
-    const studentIds = (result.students || []).map(name => {
-      const stu = state.students.find(s => s.name === name);
-      return stu ? stu.id : null;
-    }).filter(Boolean);
+    qmStateList = resultArray.map(item => {
+      const studentIds = (item.students || []).map(name => {
+        const stu = state.students.find(s => s.name === name);
+        return stu ? stu.id : null;
+      }).filter(Boolean);
+      const mappedModules = (item.modules || []).map(m => MODULE_KEYS[m]).filter(Boolean);
+      return {
+        text: item.content || '未知内容',
+        date: item.date || todayStr(),
+        students: studentIds,
+        modules: mappedModules.length ? mappedModules : ['log']
+      };
+    });
 
-    // 构造 qmState 并打开弹窗
-    qmState = {
-      text: result.content || text,
-      date: result.date || todayStr(),
-      students: studentIds,
-      modules: mappedModules.length ? mappedModules : ['log']
-    };
+    if (!qmStateList.length) throw new Error('AI 没有解析出有效内容');
     
-    renderQuickModal();
+    renderAiResults();
     document.getElementById('quick-modal').classList.add('show');
-    toast('AI 解析成功，请确认 ✓');
+    toast(`AI 成功拆分为 ${qmStateList.length} 条记录 ✓`);
 
   } catch (err) {
     console.error(err);
@@ -991,42 +992,209 @@ async function aiQuickParse() {
   }
 }
 
-// ==========================================
-// 本地速记逻辑
-// ==========================================
-let qmState = { text: '', date: '', students: [], modules: [] };
-function openQuickModal() { const text = document.getElementById('quick-input').value.trim(); if (!text) return toast('请输入内容'); const r = analyzeText(text); qmState = { text, date: todayStr(), students: r.students, modules: r.modules }; renderQuickModal(); document.getElementById('quick-modal').classList.add('show'); }
-function renderQuickModal() {
-  document.getElementById('qm-text').textContent = '「' + qmState.text + '」'; document.getElementById('qm-date').value = qmState.date;
-  const stuBox = document.getElementById('qm-students'); if (!state.students.length) { stuBox.innerHTML = '<span class="muted">暂无学生数据，可先去学生档案添加</span>'; } else { stuBox.innerHTML = state.students.map(s => `<span class="stu-chip ${qmState.students.includes(s.id)?'on':''}" onclick="toggleQmStudent('${s.id}')">${esc(s.name)}</span>`).join(''); }
-  document.getElementById('qm-modules').innerHTML = MODULES.map(m => { const c = COLOR_MAP[m.color]; const on = qmState.modules.includes(m.key); return `<div class="module-card ${on?'on':''}" onclick="toggleQmModule('${m.key}')"><div class="mc-icon" style="background:${c.bg};color:${c.fg}">${m.icon}</div><div class="mc-info"><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div></div><div class="mc-check">✓</div></div>`; }).join('');
-  const n = qmState.modules.length; const btn = document.getElementById('qm-save-btn'); btn.textContent = n ? `一键保存到 ${n} 个模块` : '请选择至少一个模块'; btn.disabled = !n;
-}
-function toggleQmStudent(id) { const i = qmState.students.indexOf(id); if (i >= 0) qmState.students.splice(i, 1); else qmState.students.push(id); renderQuickModal(); }
-function toggleQmModule(key) { const i = qmState.modules.indexOf(key); if (i >= 0) qmState.modules.splice(i, 1); else qmState.modules.push(key); renderQuickModal(); }
-function closeQuickModal() { document.getElementById('quick-modal').classList.remove('show'); qmState = { text: '', date: '', students: [], modules: [] }; }
-function saveQuickAll() {
-  const { text, date, students, modules } = qmState; if (!modules.length) return; const time = nowTime(); const subject = detectSubject(text);
-  modules.forEach(m => {
-    if (m === 'student') { students.forEach(sid => addStudentNote(sid, '综合记录', text, date)); }
-    else if (m === 'log') { state.logs.push({ id: uid('l'), date, time, category: '班级事务', content: text, students: students.slice() }); }
-    else if (m === 'comm') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date, studentId: sid, studentName: stu.name, type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date, studentId: '', studentName: '（未指定）', type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); } }
-    else if (m === 'todo') { state.todos.push({ id: uid('t'), content: text, done: false, priority: '普通', dueDate: date, createdAt: todayStr() }); }
-    else if (m === 'wrong') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date, studentId: sid, studentName: stu.name, subject, content: text, mastered: false }); }); } }
-    else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date, subject, title: '', rating: 4, content: text }); }
-  });
-  save(); document.getElementById('quick-input').value = ''; closeQuickModal(); renderAll(); toast(`已保存到 ${modules.length} 个模块 ✓`);
-}
-function analyzeText(text) {
-  const students = state.students.filter(s => text.includes(s.name)).map(s => s.id); const mods = [];
-  if (students.length) mods.push('student'); mods.push('log');
-  if (KEYWORDS.comm.some(w => text.includes(w))) mods.push('comm'); if (KEYWORDS.todo.some(w => text.includes(w))) mods.push('todo');
-  if (KEYWORDS.wrong.some(w => text.includes(w))) mods.push('wrong'); if (KEYWORDS.reflection.some(w => text.includes(w))) mods.push('reflection');
-  return { students, modules: [...new Set(mods)] };
+function renderAiResults() {
+  const listBox = document.getElementById('ai-results-list');
+  listBox.innerHTML = qmStateList.map((item, index) => {
+    const stuNames = item.students.map(id => { const s = state.students.find(x => x.id === id); return s ? s.name : ''; }).filter(Boolean).join('、') || '（未指定）';
+    const modTags = item.modules.map(m => {
+      const mod = { student: '学生档案', log: '班级日志', comm: '家校沟通', todo: '待办事项', wrong: '错题汇总', reflection: '课堂反思' }[m];
+      return `<span class="tag tag-blue" style="margin-right:4px;margin-bottom:4px;">${mod}</span>`;
+    }).join('');
+    return `<div style="background:#fafbfd;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:6px;">第 ${index+1} 条 · 日期：${item.date}</div>
+      <div style="font-size:13.5px;font-weight:600;color:#1f2733;margin-bottom:6px;">${esc(item.text)}</div>
+      <div style="font-size:12.5px;color:var(--text-2);">👤 ${esc(stuNames)}</div>
+      <div style="margin-top:6px;">${modTags}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('qm-save-btn').textContent = `一键保存这 ${qmStateList.length} 条记录`;
 }
 
-// 绑定本地速记的回车事件
-document.getElementById('quick-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); openQuickModal(); } });
+function closeQuickModal() {
+  document.getElementById('quick-modal').classList.remove('show');
+  qmStateList = [];
+}
+
+function saveQuickAll() {
+  if (!qmStateList.length) return;
+  const time = nowTime();
+  let savedCount = 0;
+
+  qmStateList.forEach(item => {
+    const { text, date, students, modules } = item;
+    const subject = detectSubject(text);
+    modules.forEach(m => {
+      if (m === 'student') { students.forEach(sid => addStudentNote(sid, '综合记录', text, date)); }
+      else if (m === 'log') { state.logs.push({ id: uid('l'), date, time, category: '班级事务', content: text, students: students.slice() }); }
+      else if (m === 'comm') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date, studentId: sid, studentName: stu.name, type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date, studentId: '', studentName: '（未指定）', type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); } }
+      else if (m === 'todo') { state.todos.push({ id: uid('t'), content: text, done: false, priority: '普通', dueDate: date, createdAt: todayStr() }); }
+      else if (m === 'wrong') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date, studentId: sid, studentName: stu.name, subject, content: text, mastered: false }); }); } }
+      else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date, subject, title: '', rating: 4, content: text }); }
+    });
+    savedCount++;
+  });
+
+  save();
+  document.getElementById('quick-input').value = '';
+  closeQuickModal();
+  renderAll();
+  toast(`已成功保存 ${savedCount} 条记录 ✓`);
+}
+
+// ==========================================
+// AI 专属问答逻辑
+// ==========================================
+function renderChatHistory() {
+  const box = document.getElementById('chat-messages');
+  box.innerHTML = '';
+  if (!state.chatHistory || state.chatHistory.length === 0) {
+    box.innerHTML = '<div class="chat-bubble ai">您好，黄老师！我是您的AI助教。您可以问我关于班级的任何问题，比如：“帮我总结一下最近班级的情况”、“张明最近表现怎么样？”</div>';
+    return;
+  }
+  state.chatHistory.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = 'chat-bubble ' + msg.role;
+    div.textContent = msg.content;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendAiChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!state.settings.aiApiKey) {
+    openAiConfig();
+    return toast('请先配置 AI API Key');
+  }
+
+  input.value = '';
+  state.chatHistory.push({ role: 'user', content: text });
+  renderChatHistory();
+
+  const box = document.getElementById('chat-messages');
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'chat-bubble ai';
+  loadingDiv.textContent = 'AI 思考中... ⏳';
+  box.appendChild(loadingDiv);
+  box.scrollTop = box.scrollHeight;
+
+  // 构造本地数据上下文
+  const studentNames = state.students.map(s => s.name).join('、');
+  const recentLogs = state.logs.slice(-5).map(l => `${l.date}：${l.content}`).join('\n');
+  const systemPrompt = `你是一个小学班主任的AI助手，语言亲切、专业。
+以下是班级的一些基本数据，供你参考：
+班级学生名单：${studentNames}
+最近班级日志（最近5条）：
+${recentLogs}
+请基于以上数据，回答班主任老师的问题。如果问题超出这些数据范围，请基于你作为小学教育专家的常识进行回答。`;
+
+  try {
+    const response = await fetch(state.settings.aiApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.settings.aiApiKey}` },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...state.chatHistory.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))
+        ],
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `API 请求失败 (${response.status})`);
+    }
+
+    const data = await response.json();
+    const aiReply = data.choices[0].message.content.trim();
+
+    state.chatHistory.push({ role: 'ai', content: aiReply });
+    save();
+    renderChatHistory();
+  } catch (err) {
+    console.error(err);
+    toast('问答失败：' + err.message);
+    box.removeChild(loadingDiv);
+  }
+}
+
+function clearChat() {
+  if (!confirm('确定清空所有对话记录？')) return;
+  state.chatHistory = [];
+  save();
+  renderChatHistory();
+}
+
+// ==========================================
+// 语音输入逻辑
+// ==========================================
+let recognition = null;
+let isListening = false;
+
+function initVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('voice-btn').style.display = 'none';
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'zh-CN';
+
+  recognition.onstart = function() {
+    isListening = true;
+    document.getElementById('voice-btn').textContent = '⏹️ 停止';
+    document.getElementById('voice-btn').classList.add('btn-primary');
+    document.getElementById('voice-btn').classList.remove('btn-gray');
+  };
+
+  recognition.onresult = function(event) {
+    let finalTranscript = '';
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      }
+    }
+    if (finalTranscript) {
+      const input = document.getElementById('quick-input');
+      input.value += finalTranscript;
+    }
+  };
+
+  recognition.onerror = function(event) {
+    console.error('语音识别错误:', event.error);
+    if (event.error === 'not-allowed') {
+      toast('请允许浏览器使用麦克风权限');
+    }
+  };
+
+  recognition.onend = function() {
+    isListening = false;
+    document.getElementById('voice-btn').textContent = '🎤 语音输入';
+    document.getElementById('voice-btn').classList.remove('btn-primary');
+    document.getElementById('voice-btn').classList.add('btn-gray');
+  };
+}
+
+function startVoiceInput() {
+  if (!recognition) {
+    toast('您的浏览器暂不支持语音输入，请使用Chrome或Edge');
+    return;
+  }
+  if (isListening) {
+    recognition.stop();
+  } else {
+    document.getElementById('quick-input').value = ''; // 先清空，方便说话
+    recognition.start();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initVoiceInput);
 
 // 导出功能
 function downloadExcel(filename, sheets) {
