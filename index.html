@@ -1016,6 +1016,8 @@ function closeQuickModal() {
   qmStateList = [];
 }
 
+function detectSubject(text) { for (const s of ['语文','数学','英语','科学']) if (text.includes(s)) return s; return '未填'; }
+
 function saveQuickAll() {
   if (!qmStateList.length) return toast('没有可保存的数据');
   try {
