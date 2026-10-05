@@ -161,6 +161,15 @@ tbody tr:hover td{background:#fafcff}
 .chat-input-area input{flex:1;}
 @media(max-width:900px){.stat-grid{grid-template-columns:1fr 1fr}.home-lists{grid-template-columns:1fr}.qm-modules{grid-template-columns:1fr}}
 @media(max-width:700px){.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}.brand{display:none}.sidebar nav{flex-direction:row;gap:6px}.sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}.content{padding:14px}.stat-grid{grid-template-columns:1fr 1fr;gap:10px}.greet-hi{font-size:18px}.holiday-board{flex-direction:column;align-items:flex-start;gap:12px}.chat-container{height:calc(100vh - 200px);}}
+/* 可编辑弹窗样式 */
+.edit-item{background:#fafbfd;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
+.edit-item textarea{font-size:13.5px;margin-bottom:8px;}
+.edit-item .edit-bottom{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.edit-item .edit-bottom input[type=date]{flex:1;max-width:150px;}
+.module-checkbox-group{display:flex;gap:6px;flex-wrap:wrap;}
+.module-checkbox-label{font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;user-select:none;}
+.module-checkbox-label input{display:none;}
+.module-checkbox-label.checked{background:var(--primary-soft);color:var(--primary);border-color:var(--primary);}
 </style>
 </head>
 <body>
@@ -482,15 +491,15 @@ tbody tr:hover td{background:#fafcff}
   </div>
 </div>
 
-<!-- 速记识别模态框 -->
+<!-- 速记识别模态框（可编辑版） -->
 <div class="modal-bg" id="quick-modal">
   <div class="modal">
-    <h3>✨ AI 智能解析结果</h3>
-    <div class="sub">AI 已将内容拆分为多条记录，请确认后一键保存</div>
-    <div id="ai-results-list" style="max-height: 50vh; overflow-y: auto; margin-bottom: 16px;"></div>
+    <h3>✨ 确认与修改归档内容</h3>
+    <div class="sub">您可以修改文字、日期和分类，确认无误后一键保存</div>
+    <div id="ai-results-list" style="max-height: 60vh; overflow-y: auto; margin-bottom: 16px;"></div>
     <div class="modal-actions">
       <button class="btn btn-gray" onclick="closeQuickModal()">取消</button>
-      <button class="btn btn-primary" id="qm-save-btn" onclick="saveQuickAll()">一键全部保存</button>
+      <button class="btn btn-primary" id="qm-save-btn" onclick="saveQuickAll()">一键保存</button>
     </div>
   </div>
 </div>
@@ -905,14 +914,18 @@ function delPhoto(id) { if (!confirm('删除这张照片？')) return; state.pho
 function renderPhotos() { const grid = document.getElementById('photo-grid'); if (!state.photos.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">还没有照片</div>'; return; } grid.innerHTML = state.photos.slice().reverse().map(p => `<div class="photo-item"><button class="del" onclick="delPhoto('${p.id}')">×</button><img src="${p.dataUrl}" alt=""><div class="info"><div style="color:var(--text-3)">${esc(p.date)}</div>${p.desc ? `<div>${esc(p.desc)}</div>` : ''}</div></div>`).join(''); }
 
 // ==========================================
-// AI 智能解析逻辑 (支持多条拆分)
+// AI 智能解析 & 本地快记 (统一可编辑弹窗)
 // ==========================================
 const MODULE_KEYS = {
   '学生档案': 'student', '班级日志': 'log', '家校沟通': 'comm',
   '待办事项': 'todo', '错题汇总': 'wrong', '课堂反思': 'reflection'
 };
+const MODULE_NAMES = {
+  'student': '学生档案', 'log': '班级日志', 'comm': '家校沟通',
+  'todo': '待办事项', 'wrong': '错题汇总', 'reflection': '课堂反思'
+};
 
-let qmStateList = []; // 存 AI 解析出的多条结果
+let qmStateList = []; // 存储所有待保存的数据
 
 function openAiConfig() {
   document.getElementById('ai-api-key').value = state.settings.aiApiKey || '';
@@ -928,6 +941,17 @@ function saveAiConfig() {
   toast('AI 配置已保存 ✓');
 }
 
+// 从输入框触发本地快记
+function openQuickModal() {
+  const text = document.getElementById('quick-input').value.trim();
+  if (!text) return toast('请输入内容');
+  const r = analyzeText(text);
+  qmStateList = [{ text, date: todayStr(), students: r.students, modules: r.modules }];
+  renderEditableResults();
+  document.getElementById('quick-modal').classList.add('show');
+}
+
+// 从输入框触发AI解析
 async function aiQuickParse() {
   const text = document.getElementById('quick-input').value.trim();
   if (!text) return toast('请先输入内容');
@@ -941,8 +965,8 @@ async function aiQuickParse() {
   btn.textContent = '⏳ 解析中...';
   btn.disabled = true;
 
+  const today = todayStr();
   const studentList = state.students.map(s => s.name).join('、');
-    const today = todayStr();
   const prompt = `你是一个小学班主任的AI助手。今天的日期是 ${today}。请分析以下班主任输入的内容。如果包含多件事情，必须拆分成多条独立记录（例如说了4件事，就返回4个对象）。提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期（如果是“明天”，请基于今天的日期推算具体日期）。请严格以JSON数组格式返回，不要包含任何Markdown标记。数组里每个对象的格式为：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"精炼后的记录文本"}。
 已知班级学生名单：${studentList}
 输入内容：${text}`;
@@ -980,7 +1004,7 @@ async function aiQuickParse() {
 
     if (!qmStateList.length) throw new Error('AI 没有解析出有效内容');
     
-    renderAiResults();
+    renderEditableResults();
     document.getElementById('quick-modal').classList.add('show');
     toast(`AI 成功拆分为 ${qmStateList.length} 条记录 ✓`);
 
@@ -993,19 +1017,25 @@ async function aiQuickParse() {
   }
 }
 
-function renderAiResults() {
+// 渲染可编辑的弹窗
+function renderEditableResults() {
   const listBox = document.getElementById('ai-results-list');
   listBox.innerHTML = qmStateList.map((item, index) => {
-    const stuNames = item.students.map(id => { const s = state.students.find(x => x.id === id); return s ? s.name : ''; }).filter(Boolean).join('、') || '（未指定）';
-    const modTags = item.modules.map(m => {
-      const mod = { student: '学生档案', log: '班级日志', comm: '家校沟通', todo: '待办事项', wrong: '错题汇总', reflection: '课堂反思' }[m];
-      return `<span class="tag tag-blue" style="margin-right:4px;margin-bottom:4px;">${mod}</span>`;
+    const modCheckboxes = Object.keys(MODULE_NAMES).map(key => {
+      const checked = item.modules.includes(key) ? 'checked' : '';
+      const checkedClass = item.modules.includes(key) ? 'checked' : '';
+      return `<label class="module-checkbox-label ${checkedClass}">
+        <input type="checkbox" value="${key}" ${checked} onchange="this.parentElement.classList.toggle('checked', this.checked)">
+        ${MODULE_NAMES[key]}
+      </label>`;
     }).join('');
-    return `<div style="background:#fafbfd;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;">
-      <div style="font-size:12px;color:var(--text-3);margin-bottom:6px;">第 ${index+1} 条 · 日期：${item.date}</div>
-      <div style="font-size:13.5px;font-weight:600;color:#1f2733;margin-bottom:6px;">${esc(item.text)}</div>
-      <div style="font-size:12.5px;color:var(--text-2);">👤 ${esc(stuNames)}</div>
-      <div style="margin-top:6px;">${modTags}</div>
+
+    return `<div class="edit-item" data-index="${index}">
+      <textarea class="edit-content" rows="2" placeholder="记录内容">${esc(item.text)}</textarea>
+      <div class="edit-bottom">
+        <input type="date" class="edit-date" value="${item.date}">
+        <div class="module-checkbox-group">${modCheckboxes}</div>
+      </div>
     </div>`;
   }).join('');
   document.getElementById('qm-save-btn').textContent = `一键保存这 ${qmStateList.length} 条记录`;
@@ -1016,33 +1046,42 @@ function closeQuickModal() {
   qmStateList = [];
 }
 
-function detectSubject(text) { for (const s of ['语文','数学','英语','科学']) if (text.includes(s)) return s; return '未填'; }
-
+// 从 DOM 读取修改后的内容并保存
 function saveQuickAll() {
-  if (!qmStateList.length) return toast('没有可保存的数据');
+  const items = document.querySelectorAll('.edit-item');
+  if (!items.length) return toast('没有可保存的数据');
+  
   try {
     const time = nowTime();
     let savedCount = 0;
 
-    qmStateList.forEach(item => {
-      let { text, date, students, modules } = item;
-      // 防呆机制：如果AI给的日期是过去很久的，或者格式不对，强制用今天
-      if (!date || date < '2026-01-01' || isNaN(new Date(date).getTime())) {
-        date = todayStr();
-      }
-      if (!modules || !modules.length) modules = ['log'];
-      const subject = detectSubject(text);
+    items.forEach(el => {
+      const index = parseInt(el.dataset.index);
+      const newText = el.querySelector('.edit-content').value.trim();
+      const newDate = el.querySelector('.edit-date').value || todayStr();
       
-      modules.forEach(m => {
-        if (m === 'student') { students.forEach(sid => addStudentNote(sid, '综合记录', text, date)); }
-        else if (m === 'log') { state.logs.push({ id: uid('l'), date, time, category: '班级事务', content: text, students: students.slice() }); }
-        else if (m === 'comm') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date, studentId: sid, studentName: stu.name, type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date, studentId: '', studentName: '（未指定）', type: '微信沟通', content: text, status: 'done', followUpDate: '', followUpNote: '' }); } }
-        else if (m === 'todo') { state.todos.push({ id: uid('t'), content: text, done: false, priority: '普通', dueDate: date, createdAt: todayStr() }); }
-        else if (m === 'wrong') { if (students.length) { students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date, studentId: sid, studentName: stu.name, subject, content: text, mastered: false }); }); } }
-        else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date, subject, title: '', rating: 4, content: text }); }
+      const checkedModules = [];
+      el.querySelectorAll('.module-checkbox-group input[type=checkbox]:checked').forEach(cb => {
+        checkedModules.push(cb.value);
+      });
+
+      if (!newText || checkedModules.length === 0) return; // 跳过空内容
+      
+      const originalItem = qmStateList[index];
+      const subject = detectSubject(newText);
+      
+      checkedModules.forEach(m => {
+        if (m === 'student') { originalItem.students.forEach(sid => addStudentNote(sid, '综合记录', newText, newDate)); }
+        else if (m === 'log') { state.logs.push({ id: uid('l'), date: newDate, time, category: '班级事务', content: newText, students: originalItem.students.slice() }); }
+        else if (m === 'comm') { if (originalItem.students.length) { originalItem.students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date: newDate, studentId: sid, studentName: stu.name, type: '微信沟通', content: newText, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date: newDate, studentId: '', studentName: '（未指定）', type: '微信沟通', content: newText, status: 'done', followUpDate: '', followUpNote: '' }); } }
+        else if (m === 'todo') { state.todos.push({ id: uid('t'), content: newText, done: false, priority: '普通', dueDate: newDate, createdAt: todayStr() }); }
+        else if (m === 'wrong') { if (originalItem.students.length) { originalItem.students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date: newDate, studentId: sid, studentName: stu.name, subject, content: newText, mastered: false }); }); } }
+        else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date: newDate, subject, title: '', rating: 4, content: newText }); }
       });
       savedCount++;
     });
+
+    if (savedCount === 0) return toast('没有勾选任何模块，保存失败');
 
     save();
     document.getElementById('quick-input').value = '';
@@ -1051,12 +1090,28 @@ function saveQuickAll() {
     toast(`已成功保存 ${savedCount} 条记录 ✓`);
   } catch (err) {
     console.error('保存出错:', err);
-    toast('保存失败，请重试：' + err.message);
+    toast('保存失败：' + err.message);
   }
 }
-// ==========================================
-// AI 专属问答逻辑
-// ==========================================
+
+// 基础关键词分析
+function analyzeText(text) {
+  const students = state.students.filter(s => text.includes(s.name)).map(s => s.id); const mods = [];
+  if (students.length) mods.push('student'); mods.push('log');
+  if (['家长','妈妈','爸爸','电话','微信','沟通','联系','反映','反馈','交流','家访','面谈','约谈','来访','短信','私信'].some(w => text.includes(w))) mods.push('comm');
+  if (['明天','后天','记得','提醒','待办','需要','准备','收集','上交','截止','安排','通知'].some(w => text.includes(w))) mods.push('todo');
+  if (['错题','做错','不会','写错','算错','答错','错在','这道题','这道','做不来'].some(w => text.includes(w))) mods.push('wrong');
+  if (['课堂','上课','教学','反思','今天讲','这节课','导入','环节','板书','提问'].some(w => text.includes(w))) mods.push('reflection');
+  return { students, modules: [...new Set(mods)] };
+}
+
+// 判断科目
+function detectSubject(text) { for (const s of ['语文','数学','英语','科学']) if (text.includes(s)) return s; return '未填'; }
+
+// 绑定本地速记的回车事件
+document.getElementById('quick-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); openQuickModal(); } });
+
+// AI 对话
 function renderChatHistory() {
   const box = document.getElementById('chat-messages');
   box.innerHTML = '';
@@ -1093,7 +1148,6 @@ async function sendAiChat() {
   box.appendChild(loadingDiv);
   box.scrollTop = box.scrollHeight;
 
-  // 构造本地数据上下文
   const studentNames = state.students.map(s => s.name).join('、');
   const recentLogs = state.logs.slice(-5).map(l => `${l.date}：${l.content}`).join('\n');
   const systemPrompt = `你是一个小学班主任的AI助手，语言亲切、专业。
@@ -1142,9 +1196,7 @@ function clearChat() {
   renderChatHistory();
 }
 
-// ==========================================
 // 语音输入逻辑
-// ==========================================
 let recognition = null;
 let isListening = false;
 
@@ -1202,7 +1254,7 @@ function startVoiceInput() {
   if (isListening) {
     recognition.stop();
   } else {
-    document.getElementById('quick-input').value = ''; // 先清空，方便说话
+    document.getElementById('quick-input').value = ''; // 先清空
     recognition.start();
   }
 }
@@ -1238,6 +1290,7 @@ function exportBackup() { const blob = new Blob([JSON.stringify(state, null, 2)]
 function importBackup(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { const data = JSON.parse(ev.target.result); if (!confirm('导入将覆盖当前所有数据，确定继续？')) return; state = data; save(); renderAll(); toast('导入成功 ✓'); } catch (err) { toast('文件格式错误'); } }; r.readAsText(f); e.target.value = ''; }
 function clearAllData() { if (!confirm('⚠️ 确定清空所有数据？此操作不可恢复！')) return; if (!confirm('再次确认：真的要清空全部数据吗？')) return; localStorage.removeItem(KEY); location.reload(); }
 
+// 初始化 42 名学生
 function initRealData() {
   if (state.students.length > 0) return;
   const rawStudents = [
