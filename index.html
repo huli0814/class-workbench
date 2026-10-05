@@ -151,7 +151,6 @@ tbody tr:hover td{background:#fafcff}
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-16px);background:#fff;color:var(--text);padding:11px 22px;border-radius:999px;font-size:13.5px;z-index:999;opacity:0;transition:.3s;pointer-events:none;box-shadow:0 8px 24px rgba(80,100,130,.15);border:1px solid var(--border);font-weight:500}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
-/* AI 聊天样式 */
 .chat-container{display:flex;flex-direction:column;height:calc(100vh - 160px);background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:16px;margin-bottom:16px;}
 .chat-messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:12px;}
 .chat-bubble{max-width:80%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.6;word-wrap:break-word;}
@@ -159,9 +158,6 @@ tbody tr:hover td{background:#fafcff}
 .chat-bubble.ai{align-self:flex-start;background:#f0f3f8;color:var(--text);border-bottom-left-radius:2px;}
 .chat-input-area{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border);}
 .chat-input-area input{flex:1;}
-@media(max-width:900px){.stat-grid{grid-template-columns:1fr 1fr}.home-lists{grid-template-columns:1fr}.qm-modules{grid-template-columns:1fr}}
-@media(max-width:700px){.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}.brand{display:none}.sidebar nav{flex-direction:row;gap:6px}.sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}.content{padding:14px}.stat-grid{grid-template-columns:1fr 1fr;gap:10px}.greet-hi{font-size:18px}.holiday-board{flex-direction:column;align-items:flex-start;gap:12px}.chat-container{height:calc(100vh - 200px);}}
-/* 可编辑弹窗样式 */
 .edit-item{background:#fafbfd;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
 .edit-item textarea{font-size:13.5px;margin-bottom:8px;}
 .edit-item .edit-bottom{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
@@ -170,6 +166,8 @@ tbody tr:hover td{background:#fafcff}
 .module-checkbox-label{font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;cursor:pointer;user-select:none;}
 .module-checkbox-label input{display:none;}
 .module-checkbox-label.checked{background:var(--primary-soft);color:var(--primary);border-color:var(--primary);}
+@media(max-width:900px){.stat-grid{grid-template-columns:1fr 1fr}.home-lists{grid-template-columns:1fr}.qm-modules{grid-template-columns:1fr}}
+@media(max-width:700px){.app{flex-direction:column}.sidebar{width:100%;height:auto;position:static;display:flex;flex-direction:row;padding:10px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);gap:8px}.brand{display:none}.sidebar nav{flex-direction:row;gap:6px}.sidebar button{white-space:nowrap;padding:8px 12px;font-size:12.5px;flex-shrink:0}.content{padding:14px}.stat-grid{grid-template-columns:1fr 1fr;gap:10px}.greet-hi{font-size:18px}.holiday-board{flex-direction:column;align-items:flex-start;gap:12px}.chat-container{height:calc(100vh - 200px);}}
 </style>
 </head>
 <body>
@@ -504,6 +502,25 @@ tbody tr:hover td{background:#fafcff}
   </div>
 </div>
 
+<!-- 待办编辑模态框 -->
+<div class="modal-bg" id="todo-edit-modal">
+  <div class="modal">
+    <h3>✏️ 编辑待办事项</h3>
+    <div class="qm-row"><span class="lbl">内容</span><input type="text" id="edit-todo-content" style="flex:1;"></div>
+    <div class="qm-row"><span class="lbl">截止日期</span><input type="date" id="edit-todo-date" style="flex:1;"></div>
+    <div class="qm-row"><span class="lbl">优先级</span>
+      <select id="edit-todo-priority" style="flex:1;">
+        <option>普通</option><option>重要</option><option>紧急</option>
+      </select>
+    </div>
+    <input type="hidden" id="edit-todo-id">
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeTodoEdit()">取消</button>
+      <button class="btn btn-primary" onclick="saveTodoEdit()">保存修改</button>
+    </div>
+  </div>
+</div>
+
 <!-- AI配置模态框 -->
 <div class="modal-bg" id="ai-config-modal">
   <div class="modal">
@@ -756,21 +773,49 @@ function renderLogList() {
 }
 function delLog(id) { if (!confirm('删除这条日志？')) return; state.logs = state.logs.filter(l => l.id !== id); save(); renderCalendar(); renderLogList(); renderHome(); }
 
+// ==========================================
+// 待办事项（增加直接编辑功能）
+// ==========================================
 function addTodo() {
   const content = document.getElementById('todo-input').value.trim(); if (!content) return toast('请输入待办内容');
   const dueDate = document.getElementById('todo-date').value; const priority = document.getElementById('todo-priority').value;
   state.todos.push({ id: uid('t'), content, done: false, priority, dueDate, createdAt: todayStr() });
-  document.getElementById('todo-input').value = ''; document.getElementById('todo-date').value = ''; save(); renderTodo(); renderHome();
+  document.getElementById('todo-input').value = ''; document.getElementById('todo-date').value = ''; save(); renderTodo(); renderHome(); toast('已添加待办 ✓');
 }
 function toggleTodo(id) { const t = state.todos.find(x => x.id === id); if (t) { t.done = !t.done; save(); renderTodo(); renderHome(); } }
 function delTodo(id) { state.todos = state.todos.filter(t => t.id !== id); save(); renderTodo(); renderHome(); }
+
+function editTodo(id) {
+  const t = state.todos.find(x => x.id === id); if (!t) return;
+  document.getElementById('edit-todo-id').value = id;
+  document.getElementById('edit-todo-content').value = t.content;
+  document.getElementById('edit-todo-date').value = t.dueDate || '';
+  document.getElementById('edit-todo-priority').value = t.priority || '普通';
+  document.getElementById('todo-edit-modal').classList.add('show');
+}
+function closeTodoEdit() { document.getElementById('todo-edit-modal').classList.remove('show'); }
+function saveTodoEdit() {
+  const id = document.getElementById('edit-todo-id').value;
+  const t = state.todos.find(x => x.id === id);
+  if (t) {
+    const newContent = document.getElementById('edit-todo-content').value.trim();
+    if (!newContent) return toast('内容不能为空');
+    t.content = newContent;
+    t.dueDate = document.getElementById('edit-todo-date').value;
+    t.priority = document.getElementById('edit-todo-priority').value;
+    save(); closeTodoEdit(); renderTodo(); renderHome();
+    toast('待办已修改 ✓');
+  }
+}
+
 function renderTodo() {
   const box = document.getElementById('todo-list'); const order = { '紧急': 0, '重要': 1, '普通': 2 };
   const list = state.todos.slice().sort((a,b) => { if (a.done !== b.done) return a.done ? 1 : -1; return (order[a.priority]||2) - (order[b.priority]||2); });
   if (!list.length) { box.innerHTML = '<div class="empty">暂无待办事项 🎉</div>'; return; }
-  box.innerHTML = list.map(t => { const cls = t.priority === '紧急' ? 'tag-red' : t.priority === '重要' ? 'tag-mustard' : 'tag-gray'; return `<div class="log-item" style="display:flex;align-items:center;gap:12px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" style="width:auto;flex:0 0 auto"><div style="flex:1;${t.done?'text-decoration:line-through;color:var(--text-3)':''}">${esc(t.content)}</div><span class="tag ${cls}">${esc(t.priority)}</span>${t.dueDate ? `<span class="badge">📅 ${esc(t.dueDate)}</span>` : ''}<button class="btn btn-danger btn-sm" onclick="delTodo('${t.id}')">删除</button></div>`; }).join('');
+  box.innerHTML = list.map(t => { const cls = t.priority === '紧急' ? 'tag-red' : t.priority === '重要' ? 'tag-mustard' : 'tag-gray'; return `<div class="log-item" style="display:flex;align-items:center;gap:12px"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" style="width:auto;flex:0 0 auto"><div style="flex:1;cursor:pointer;${t.done?'text-decoration:line-through;color:var(--text-3)':''}" onclick="editTodo('${t.id}')">${esc(t.content)}</div><span class="tag ${cls}" style="cursor:pointer;" onclick="editTodo('${t.id}')">${esc(t.priority)}</span>${t.dueDate ? `<span class="badge" style="cursor:pointer;" onclick="editTodo('${t.id}')">📅 ${esc(t.dueDate)}</span>` : ''}<button class="btn btn-danger btn-sm" onclick="delTodo('${t.id}')">删除</button></div>`; }).join('');
 }
 
+// 成绩分析
 function renderScoreOptions() { refreshStudentSelects(); }
 function addScore() {
   const sid = document.getElementById('score-student').value; if (!sid) return toast('请选择学生');
@@ -859,6 +904,7 @@ function renderScoreComparison() {
   box.innerHTML = html;
 }
 
+// 错题汇总
 function addWrong() {
   const sid = document.getElementById('wrong-student').value; if (!sid) return toast('请选择学生');
   const stu = state.students.find(s => s.id === sid); const subject = document.getElementById('wrong-subject').value; const content = document.getElementById('wrong-content').value.trim();
@@ -874,6 +920,7 @@ function renderWrong() {
   box.innerHTML = list.map(w => `<div class="log-item" style="display:flex;align-items:flex-start;gap:12px"><input type="checkbox" ${w.mastered?'checked':''} onchange="toggleWrong('${w.id}')" style="width:auto;flex:0 0 auto;margin-top:5px"><div style="flex:1"><div style="font-size:12.5px;color:var(--text-2);margin-bottom:4px">${esc(w.date)} · <b>${esc(w.studentName)}</b> · ${esc(w.subject)} ${w.mastered ? '<span class="tag tag-mint">已掌握</span>' : '<span class="tag tag-mustard">未掌握</span>'}</div><div style="font-size:13.5px;color:#3b4657;line-height:1.6">${esc(w.content)}</div></div><button class="btn btn-danger btn-sm" onclick="delWrong('${w.id}')">删除</button></div>`).join('');
 }
 
+// 课堂反思
 function addReflection() {
   const subject = document.getElementById('ref-subject').value; const title = document.getElementById('ref-title').value.trim(); const rating = parseInt(document.getElementById('ref-rating').value); const content = document.getElementById('ref-content').value.trim();
   if (!content) return toast('请写下反思内容'); state.reflections.push({ id: uid('r'), date: todayStr(), subject, title, rating, content });
@@ -886,6 +933,7 @@ function renderReflections() {
   box.innerHTML = list.map(r => `<div class="log-item"><div class="meta"><span class="tag tag-lav">${esc(r.subject)}</span>${r.title ? `<span class="badge">${esc(r.title)}</span>` : ''}<span class="time">${esc(r.date)}</span><span style="color:#e8b95e;font-size:12.5px;margin-left:auto">${'⭐'.repeat(r.rating||4)}</span><button class="btn btn-danger btn-sm" onclick="delReflection('${r.id}')">删除</button></div><div class="content">${esc(r.content)}</div></div>`).join('');
 }
 
+// 家校沟通
 function toggleFollowInput() { const on = document.getElementById('comm-need-follow').checked; document.getElementById('comm-follow-date').disabled = !on; document.getElementById('comm-follow-note').disabled = !on; if (on && !document.getElementById('comm-follow-date').value) { document.getElementById('comm-follow-date').value = dateAdd(3); } }
 function addComm() {
   const sid = document.getElementById('comm-student').value; if (!sid) return toast('请选择学生');
@@ -904,6 +952,7 @@ function renderComm() {
   box.innerHTML = list.map(c => { const overdue = c.status === 'pending' && c.followUpDate && c.followUpDate < today; const statusTag = c.status === 'done' ? '<span class="tag tag-mint">已完成</span>' : overdue ? '<span class="tag tag-red">已逾期</span>' : '<span class="tag tag-pink">待跟进</span>'; return `<div class="log-item"><div class="meta"><span class="tag tag-mint">${esc(c.type)}</span><span class="badge">${esc(c.studentName)}</span><span class="time">${esc(c.date)}</span>${statusTag}${c.status === 'pending' ? `<button class="btn btn-mint btn-sm" onclick="markCommDone('${c.id}')">标记完成</button>` : ''}<button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="delComm('${c.id}')">删除</button></div><div class="content">${esc(c.content)}</div>${c.followUpNote ? `<div style="font-size:12.5px;color:var(--text-2);margin-top:5px">📌 跟进：${esc(c.followUpNote)}${c.followUpDate ? ' · ' + esc(c.followUpDate) : ''}</div>` : ''}</div>`; }).join('');
 }
 
+// 班级相册
 function uploadPhotos() {
   const files = document.getElementById('photo-file').files; if (!files || !files.length) return toast('请选择图片');
   const desc = document.getElementById('photo-desc').value.trim(); let done = 0;
@@ -925,7 +974,7 @@ const MODULE_NAMES = {
   'todo': '待办事项', 'wrong': '错题汇总', 'reflection': '课堂反思'
 };
 
-let qmStateList = []; // 存储所有待保存的数据
+let qmStateList = [];
 
 function openAiConfig() {
   document.getElementById('ai-api-key').value = state.settings.aiApiKey || '';
@@ -941,7 +990,6 @@ function saveAiConfig() {
   toast('AI 配置已保存 ✓');
 }
 
-// 从输入框触发本地快记
 function openQuickModal() {
   const text = document.getElementById('quick-input').value.trim();
   if (!text) return toast('请输入内容');
@@ -951,7 +999,6 @@ function openQuickModal() {
   document.getElementById('quick-modal').classList.add('show');
 }
 
-// 从输入框触发AI解析
 async function aiQuickParse() {
   const text = document.getElementById('quick-input').value.trim();
   if (!text) return toast('请先输入内容');
@@ -967,7 +1014,7 @@ async function aiQuickParse() {
 
   const today = todayStr();
   const studentList = state.students.map(s => s.name).join('、');
-  const prompt = `你是一个小学班主任的AI助手。今天的日期是 ${today}。请分析以下班主任输入的内容。如果包含多件事情，必须拆分成多条独立记录（例如说了4件事，就返回4个对象）。提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期（如果是“明天”，请基于今天的日期推算具体日期）。请严格以JSON数组格式返回，不要包含任何Markdown标记。数组里每个对象的格式为：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"精炼后的记录文本"}。
+  const prompt = `你是一个小学班主任的AI助手。今天的日期是 ${today}。请分析以下班主任输入的内容。如果包含多件事情，必须拆分成多条独立记录。提取出涉及的学生姓名、应该记录到哪些模块（可选：学生档案, 班级日志, 家校沟通, 待办事项, 错题汇总, 课堂反思），以及适合归档的日期（如果是“明天”，请基于今天的日期推算具体日期）。请严格以JSON数组格式返回，不要包含任何Markdown标记。数组里每个对象的格式为：{"students":["姓名"],"modules":["模块名"],"date":"YYYY-MM-DD","content":"精炼后的记录文本"}。如果在内容中明确提到了某个学生，请务必在 content 中也带上他的姓名，比如“付子浩字数不够需要重写”，而不要只写“字数不够需要重写”。
 已知班级学生名单：${studentList}
 输入内容：${text}`;
 
@@ -1017,7 +1064,6 @@ async function aiQuickParse() {
   }
 }
 
-// 渲染可编辑的弹窗
 function renderEditableResults() {
   const listBox = document.getElementById('ai-results-list');
   listBox.innerHTML = qmStateList.map((item, index) => {
@@ -1046,7 +1092,6 @@ function closeQuickModal() {
   qmStateList = [];
 }
 
-// 从 DOM 读取修改后的内容并保存
 function saveQuickAll() {
   const items = document.querySelectorAll('.edit-item');
   if (!items.length) return toast('没有可保存的数据');
@@ -1065,7 +1110,7 @@ function saveQuickAll() {
         checkedModules.push(cb.value);
       });
 
-      if (!newText || checkedModules.length === 0) return; // 跳过空内容
+      if (!newText || checkedModules.length === 0) return;
       
       const originalItem = qmStateList[index];
       const subject = detectSubject(newText);
@@ -1074,7 +1119,14 @@ function saveQuickAll() {
         if (m === 'student') { originalItem.students.forEach(sid => addStudentNote(sid, '综合记录', newText, newDate)); }
         else if (m === 'log') { state.logs.push({ id: uid('l'), date: newDate, time, category: '班级事务', content: newText, students: originalItem.students.slice() }); }
         else if (m === 'comm') { if (originalItem.students.length) { originalItem.students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.comms.push({ id: uid('c'), date: newDate, studentId: sid, studentName: stu.name, type: '微信沟通', content: newText, status: 'done', followUpDate: '', followUpNote: '' }); }); } else { state.comms.push({ id: uid('c'), date: newDate, studentId: '', studentName: '（未指定）', type: '微信沟通', content: newText, status: 'done', followUpDate: '', followUpNote: '' }); } }
-        else if (m === 'todo') { state.todos.push({ id: uid('t'), content: newText, done: false, priority: '普通', dueDate: newDate, createdAt: todayStr() }); }
+        else if (m === 'todo') {
+          let stuPrefix = '';
+          if (originalItem.students && originalItem.students.length > 0) {
+            const names = originalItem.students.map(id => { const s = state.students.find(x => x.id === id); return s ? s.name : ''; }).filter(Boolean).join('、');
+            if (names) stuPrefix = `【${names}】`;
+          }
+          state.todos.push({ id: uid('t'), content: stuPrefix + newText, done: false, priority: '普通', dueDate: newDate, createdAt: todayStr() });
+        }
         else if (m === 'wrong') { if (originalItem.students.length) { originalItem.students.forEach(sid => { const stu = state.students.find(s => s.id === sid); if (stu) state.wrongs.push({ id: uid('w'), date: newDate, studentId: sid, studentName: stu.name, subject, content: newText, mastered: false }); }); } }
         else if (m === 'reflection') { state.reflections.push({ id: uid('r'), date: newDate, subject, title: '', rating: 4, content: newText }); }
       });
@@ -1094,7 +1146,6 @@ function saveQuickAll() {
   }
 }
 
-// 基础关键词分析
 function analyzeText(text) {
   const students = state.students.filter(s => text.includes(s.name)).map(s => s.id); const mods = [];
   if (students.length) mods.push('student'); mods.push('log');
@@ -1105,10 +1156,8 @@ function analyzeText(text) {
   return { students, modules: [...new Set(mods)] };
 }
 
-// 判断科目
 function detectSubject(text) { for (const s of ['语文','数学','英语','科学']) if (text.includes(s)) return s; return '未填'; }
 
-// 绑定本地速记的回车事件
 document.getElementById('quick-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); openQuickModal(); } });
 
 // AI 对话
@@ -1254,7 +1303,7 @@ function startVoiceInput() {
   if (isListening) {
     recognition.stop();
   } else {
-    document.getElementById('quick-input').value = ''; // 先清空
+    document.getElementById('quick-input').value = '';
     recognition.start();
   }
 }
